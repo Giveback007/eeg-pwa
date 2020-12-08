@@ -1,5 +1,7 @@
-import { icons } from "./components/Icons/Icons";
-import Dashboard from './views/Dasboard';
+import { icons } from "components/Icons/Icons";
+import Sessions from "views/Sessions";
+import Settings from "views/Settings";
+import Dashboard from 'views/Dasboard';
 
 export type RouteObj = {
     path: string;
@@ -19,13 +21,13 @@ const routes: RouteObj[] = [
         path: "/sessions",
         name: "Sessions",
         icon: icons.ListAlt,
-        component: ,
+        component: Sessions,
         // layout: "/admin"
     }, {
       path: "/settings",
       name: "Settings",
       icon: icons.Settings,
-      component: ,
+      component: Settings,
     //   layout: "/admin"
     },
 ];

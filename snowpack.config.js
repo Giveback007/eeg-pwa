@@ -27,6 +27,7 @@ module.exports = {
     ],
     // https://www.snowpack.dev/#config.installoptions
     installOptions: {
+
       // Default:false, or true when run with snowpack build
       // treeshake: true
       /* ... */
@@ -37,13 +38,19 @@ module.exports = {
     buildOptions: {
       out: 'build',
       clean: true,
-      sourceMaps: true,
+      sourceMaps: true
       /* ... */
     },
     proxy: {
       /* ... */
     },
     alias: {
+      "src": "./src",
+      "@types": "./src/@types",
+      "components": "./src/components",
+      "data": "./src/data",
+      "styles": './src/styles',
+      "views": "./src/views"
       /* ... */
     },
 };

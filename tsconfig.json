@@ -5,9 +5,16 @@
         "target": "esnext",
         "moduleResolution": "node",
         "jsx": "preserve",
-        "baseUrl": "./src",
+        "baseUrl": ".",
         /* paths - If you configure Snowpack import aliases, add them here. */
-        "paths": {},
+        "paths": {
+            "src/*": ["./src/*"],
+            "@types/*": ["./src/@types/*"],
+            "components/*": ["./src/components/*"],
+            "data/*": ["./src/data/*"],
+            "styles/*": ["./src/styles/*"],
+            "views/*": ["./src/views/*"],
+        },
         /* noEmit - Snowpack builds (emits) files, not tsc. */
         "noEmit": true,
         /* Additional Options */

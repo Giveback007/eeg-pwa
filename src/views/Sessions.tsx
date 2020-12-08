@@ -2,8 +2,8 @@ import { makeStyles } from "@material-ui/core/styles";
 import Table from "components/Table/Table";
 import GridContainer from "components/Grid/GridContainer";
 import GridItem from "components/Grid/GridItem";
-import Card from "components/Card/Card";
 import CardHeader from "components/Card/CardHeader";
+import Card from "components/Card/Card";
 import CardBody from "components/Card/CardBody";
 
 const styles = {
@@ -39,7 +39,7 @@ const styles = {
 // FIXME
 const useStyles = makeStyles(styles as any);
 
-export default function TableList() {
+export default function Sessions() {
   const classes = useStyles();
   return (
     <GridContainer>

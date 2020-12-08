@@ -3,7 +3,7 @@ import './initializer';
 // INITIALIZED //
 
 import 'normalize.css'
-import "assets/css/material-dashboard-react.css";
+import "styles/material-dashboard-react.css";
 import './index.scss';
 
 import ReactDOM from 'react-dom';
