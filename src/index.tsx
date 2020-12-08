@@ -9,7 +9,9 @@ import './index.scss';
 import ReactDOM from 'react-dom';
 import { createBrowserHistory } from "history";
 import { Router, Route, Switch, Redirect } from "react-router-dom";
-import Dashboard from './views/Dasboard';
+// import Dashboard from './views/Dasboard';
+// import Settings from './views/Settings';
+import Sessions from './views/Sessions';
 
 if (env.MODE === 'development') {
     // -- Run in DEV only -- //
@@ -23,7 +25,7 @@ const hist = createBrowserHistory();
 ReactDOM.render(
     <Router history={hist}>
         <Switch>
-            <Route path="/dashboard" component={Dashboard} />
+            <Route path="/dashboard" component={Sessions} />
             <Redirect from="/" to="/dashboard" />
         </Switch>
     </Router>,

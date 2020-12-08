@@ -16,5 +16,5 @@ class Dasboard extends React.Component<P, S> {
     }
 }
 
-const link = (s: State) => ({  });
+const link = (_s: State) => ({  });
 export default linker(link, Dasboard);

@@ -1,4 +1,4 @@
-# Eeg Pwa
+# EEG Web App
 
 <!-- The project can be viewed here: -->
 

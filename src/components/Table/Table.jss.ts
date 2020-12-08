@@ -1,4 +1,3 @@
-import type { Styles } from "@material-ui/core/styles/withStyles";
 import {
   warningColor,
   primaryColor,
@@ -12,7 +11,7 @@ import {
 
 // FIXME: fix this
 // Styles<Theme, Props, ClassKey>
-const tableStyle: Styles<any, any, any> = theme => ({
+const tableStyle = (theme: any) => ({
   warningTableHeader: {
     color: warningColor[0]
   },

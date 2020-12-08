@@ -6,7 +6,7 @@
 // // // Example: input = 999 => output = 153, 153, 153
 // #############################
 // FIXME
-const hexToRgb = input => {
+const hexToRgb = (input: any) => {
   input = input + "";
   input = input.replace("#", "");
   let hexRegex = /[0-9A-Fa-f]/g;
