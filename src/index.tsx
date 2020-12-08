@@ -1,11 +1,15 @@
 const { env } = import.meta;
+import './initializer';
+// INITIALIZED //
 
 import 'normalize.css'
+import "assets/css/material-dashboard-react.css";
 import './index.scss';
 
-import React from 'react';
 import ReactDOM from 'react-dom';
-import App from './App';
+import { createBrowserHistory } from "history";
+import { Router, Route, Switch, Redirect } from "react-router-dom";
+import Dashboard from './views/Dasboard';
 
 if (env.MODE === 'development') {
     // -- Run in DEV only -- //
@@ -15,7 +19,16 @@ if (env.MODE === 'production') {
     // -- Run in PROD only -- //
 }
 
-ReactDOM.render(<App />, document.getElementById('root'));
+const hist = createBrowserHistory();
+ReactDOM.render(
+    <Router history={hist}>
+        <Switch>
+            <Route path="/dashboard" component={Dashboard} />
+            <Redirect from="/" to="/dashboard" />
+        </Switch>
+    </Router>,
+    document.getElementById('root')
+);
 
 // Hot Module Replacement (HMR) - Remove this snippet to remove HMR.
 // Learn more: https://www.snowpack.dev/#hot-module-replacement

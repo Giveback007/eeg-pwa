@@ -61,16 +61,16 @@
       ]
   },
   "cSpell.words": [
-      "Unmount",
-      "Vals",
-      "Basemap",
-      "Unmount",
-      "bottomright",
-      "defn",
-      "devtool",
-      "devtools",
-      "postbuild",
-      "redux"
+    "Basemap",
+    "Dasboard",
+    "Unmount",
+    "Vals",
+    "bottomright",
+    "defn",
+    "devtool",
+    "devtools",
+    "postbuild",
+    "redux"
   ],
   "editor.rulers": [80],
   "typescript.tsdk": "node_modules\\typescript\\lib",
