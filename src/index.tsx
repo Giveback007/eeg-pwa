@@ -32,6 +32,11 @@ ReactDOM.render(
     document.getElementById('root')
 );
 
+window.addEventListener('popstate', function (event) {
+    log(event)
+	// The URL changed...
+});
+
 // Hot Module Replacement (HMR) - Remove this snippet to remove HMR.
 // Learn more: https://www.snowpack.dev/#hot-module-replacement
 // if (import.meta.hot)

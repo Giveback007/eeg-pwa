@@ -1,5 +1,3 @@
-/*eslint-disable*/
-import React from "react";
 import classNames from "classnames";
 import PropTypes from "prop-types";
 import { NavLink } from "react-router-dom";
@@ -14,7 +12,7 @@ import Icon from "@material-ui/core/Icon";
 // core components
 import AdminNavbarLinks from "components/Navbars/AdminNavbarLinks.js";
 
-import styles from "assets/jss/material-dashboard-react/components/sidebarStyle.js";
+import styles from "./Sidebar.style";
 
 const useStyles = makeStyles(styles);
 

@@ -72,7 +72,7 @@
     "postbuild",
     "redux"
   ],
-  "editor.rulers": [80],
+  "editor.rulers": [65],
   "typescript.tsdk": "node_modules\\typescript\\lib",
   "debug.showInStatusBar": "never",
   "debug.toolBarLocation": "floating",
