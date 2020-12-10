@@ -1,131 +1,100 @@
-import React, { useEffect, useState } from 'react';
-import { Drawer, makeStyles, Button, AppBar, Toolbar, Hidden, IconButton, List, ListItem } from '@material-ui/core';
+import React, { useState } from 'react';
+import classNames from 'classnames';
+import { Drawer, makeStyles, AppBar, Toolbar, IconButton, Button, CircularProgress } from '@material-ui/core';
+import { linker, State } from 'src/data/store';
+import { Icon, icons } from '../icons';
 
 import styles from "./Navbar.style";
-import { linker, State } from 'src/data/store';
-import classNames from 'classnames';
-import { icons } from '../icons';
 
 // type S = { };
-// type color = NotifyColors | "transparent" | "white" | "dark";
 type P = {
-    // color?: color
-    rightLinks?: React.ReactNode;
-    leftLinks?: React.ReactNode;
+    topMenuBtns?: NavButton[];
+    rightMenuBtns?: NavButton[];
     brand?: string;
-    // fixed?: boolean;
-    // absolute?: boolean;
-    // changeColorOnScroll?: { height: number; color: color };
 } & ReturnType<typeof link>;
 
-const useStyles1 = makeStyles(styles as any); //FIXME
+const useStyles = makeStyles(styles as any); //FIXME
+
+export type NavButton = {
+    icon?: Icon;
+    title?: string;
+    active?: boolean;
+    loading?: boolean;
+    disabled?: boolean;
+}
+
+function NavBtn(p: NavButton & { handleDrawerToggle?: () => void }) {
+    let IC: any = p.icon ? icons[p.icon] : null;
+    IC = IC ? <IC className="btn-icon" /> : null;
+    // log(p.active)
+    return (
+        <Button
+            disabled={p.disabled}
+            className={'nav-btn ' + (p.active ? 'active' : '')}
+            onClick={p.handleDrawerToggle}
+        >
+            {p.loading ?
+                <CircularProgress
+                    size={20}
+                    style={{color: "#8c209e"}}
+                    className="btn-icon"
+                /> : IC}
+            {p.title || null}
+        </Button>
+    )
+}
 
 function Navbar(props: P) {
-    const classes = useStyles1();
+    const classes = useStyles();
     const [mobileOpen, setMobileOpen] = useState(() => false);
+    const { topMenuBtns: rightLinks, rightMenuBtns: leftLinks, brand } = props;
 
-    // const color = props.color || 'white';
-    let {
-        rightLinks,
-        leftLinks,
-        // absolute, changeColorOnScroll,
-        // fixed,
-         brand,
-    } = props;
+    const handleDrawerToggle = () =>
+        setMobileOpen((open) => !open)
 
-    // leftLinks = [<div>{'>'}</div>, <div>{'[]'}</div>]
-    // // -- COLOR CHANGE ON SCROLL -- //
-    // useEffect(() => {
-    //     if (props.changeColorOnScroll)
-    //         window.addEventListener("scroll", headerColorChange);
-
-    //     return function cleanup() {
-    //         if (props.changeColorOnScroll)
-    //             window.removeEventListener("scroll", headerColorChange);
-    //     };
-    // });
-
-    // const headerColorChange = () => {
-    //     if (!changeColorOnScroll) return;
-
-    //     const windowsScrollTop = window.pageYOffset;
-    //     if (windowsScrollTop > changeColorOnScroll.height) {
-    //       document.body
-    //         .getElementsByTagName("header")[0]
-    //         .classList.remove(classes[color]);
-    //       document.body
-    //         .getElementsByTagName("header")[0]
-    //         .classList.add(classes[changeColorOnScroll.color]);
-    //     } else {
-    //       document.body
-    //         .getElementsByTagName("header")[0]
-    //         .classList.add(classes[color]);
-    //       document.body
-    //         .getElementsByTagName("header")[0]
-    //         .classList.remove(classes[changeColorOnScroll.color]);
-    //     }
-    //   };
-
-      const handleDrawerToggle = () => {
-        setMobileOpen((open) => !open);
-      };
-
-      const appBarClasses = classNames({
+    const appBarClasses = classNames({
         [classes.appBar]: true,
-        // [classes[color]]: color,
-        // [classes.absolute]: absolute,
         [classes.flex]: true,
         [classes.fixed]: true
-      });
+    });
 
-      const brandComponent =
-        <Button id="app-bar" className={classes.title}>{brand}</Button>;
+    const brandComponent =
+        <Button
+            id="app-bar"
+            className={classes.title}
+        >{brand}</Button>;
 
-    return <AppBar className={appBarClasses}>
-
-        <Toolbar className={classes.container}>
-            {/* {leftLinks ? brandComponent : null} */}
-            {/* { brandComponent } */}
-            {/* <div className="classes.flex">
-                {leftLinks}
-            </div> */}
-            <div className={classes.flex}>
-                {brandComponent}
-                {leftLinks}
-                {/* {leftLinks ? (
-                    <Hidden smDown implementation="css">
-                        {leftLinks}
-                    </Hidden>
-                ) : (brandComponent)} */}
-            </div>
-            {/* <Hidden smDown implementation="css">
-                {rightLinks}
-            </Hidden> */}
-
-            <IconButton
-                color="inherit"
-                aria-label="open drawer"
-                onClick={handleDrawerToggle}
-            > <icons.Menu /> </IconButton>
-
-        </Toolbar>
-        {/* <Hidden mdUp implementation="js"> */}
-            <Drawer
-                variant="temporary"
-                anchor={"right"}
-                open={mobileOpen}
-                classes={{
-                    paper: classes.drawerPaper
-                }}
-                onClose={handleDrawerToggle}
-            >
-                <div className={classes.appResponsive}>
-                {/* {leftLinks} */}
-                {rightLinks}
+    return <>
+        <AppBar className={appBarClasses}>
+            <Toolbar className={classes.container}>
+                <div className={classes.flex}>
+                    {brandComponent}
+                    {leftLinks?.map(x => NavBtn(x))}
                 </div>
-            </Drawer>
-        {/* </Hidden> */}
-  </AppBar>
+
+                <IconButton
+                    color="inherit"
+                    aria-label="open drawer"
+                    className='nav-btn-activatable'
+                    onClick={handleDrawerToggle}
+                > <icons.Menu /> </IconButton>
+            </Toolbar>
+        </AppBar>
+        <Drawer
+            variant="temporary"
+            anchor={"right"}
+            open={mobileOpen}
+            className={classes.appDrawer}
+            onClose={handleDrawerToggle}
+        >
+            {rightLinks?.map(x =>
+                <>
+                {/* <hr/> */}
+                <NavBtn {...{...x, handleDrawerToggle}} />
+                </>
+            )}
+        </Drawer>
+    </>
 }
 
 const link = (_s: State) => ({  });
