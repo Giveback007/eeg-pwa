@@ -1,3 +1,6 @@
+<!-- https://github.com/creativetimofficial/material-kit-react -->
+https://blog.bitsrc.io/5-tools-for-faster-development-in-react-676f134050f2
+
 material-kit-react-typescript:
 https://github.com/Slessi/material-dashboard-react-ts
 

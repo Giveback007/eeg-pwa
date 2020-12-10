@@ -1,75 +1,132 @@
-import React from "react";
-import classNames from "classnames";
-import PropTypes from "prop-types";
-// @material-ui/core components
-import { makeStyles } from "@material-ui/core/styles";
-import AppBar from "@material-ui/core/AppBar";
-import Toolbar from "@material-ui/core/Toolbar";
-import IconButton from "@material-ui/core/IconButton";
-import Hidden from "@material-ui/core/Hidden";
-// @material-ui/icons
-import Menu from "@material-ui/icons/Menu";
-// core components
-import AdminNavbarLinks from "./AdminNavbarLinks.js";
-import RTLNavbarLinks from "./RTLNavbarLinks.js";
-import Button from "components/CustomButtons/Button.js";
+import React, { useEffect, useState } from 'react';
+import { Drawer, makeStyles, Button, AppBar, Toolbar, Hidden, IconButton, List, ListItem } from '@material-ui/core';
 
 import styles from "./Navbar.style";
+import { linker, State } from 'src/data/store';
+import classNames from 'classnames';
+import { icons } from '../icons';
 
-const useStyles = makeStyles(styles);
+// type S = { };
+// type color = NotifyColors | "transparent" | "white" | "dark";
+type P = {
+    // color?: color
+    rightLinks?: React.ReactNode;
+    leftLinks?: React.ReactNode;
+    brand?: string;
+    // fixed?: boolean;
+    // absolute?: boolean;
+    // changeColorOnScroll?: { height: number; color: color };
+} & ReturnType<typeof link>;
 
-export default function Header(props) {
-  const classes = useStyles();
+const useStyles1 = makeStyles(styles as any); //FIXME
 
-  function makeBrand() {
-    let name;
-    // let x = [];
-    // arrHas(x, )
-    // x.in
-    props.routes.map(prop => {
-      if (window.location.href.indexOf(prop.layout + prop.path) !== -1) {
-        name = prop.name;
-      }
-    });
+function Navbar(props: P) {
+    const classes = useStyles1();
+    const [mobileOpen, setMobileOpen] = useState(() => false);
 
-    debugger
+    // const color = props.color || 'white';
+    let {
+        rightLinks,
+        leftLinks,
+        // absolute, changeColorOnScroll,
+        // fixed,
+         brand,
+    } = props;
 
-    return name;
-  }
+    // leftLinks = [<div>{'>'}</div>, <div>{'[]'}</div>]
+    // // -- COLOR CHANGE ON SCROLL -- //
+    // useEffect(() => {
+    //     if (props.changeColorOnScroll)
+    //         window.addEventListener("scroll", headerColorChange);
 
-  const { color } = props;
-  const appBarClasses = classNames({
-    [" " + classes[color]]: color
-  });
-  return (
-    <AppBar className={classes.appBar + appBarClasses}>
-      <Toolbar className={classes.container}>
-        <div className={classes.flex}>
-          {/* Here we create navbar brand, based on route name */}
-          <Button color="transparent" href="#" className={classes.title}>
-            {makeBrand()}
-          </Button>
-        </div>
-        <Hidden smDown implementation="css">
-          {props.rtlActive ? <RTLNavbarLinks /> : <AdminNavbarLinks />}
-        </Hidden>
-        <Hidden mdUp implementation="css">
-          <IconButton
-            color="inherit"
-            aria-label="open drawer"
-            onClick={props.handleDrawerToggle}
-          >
-            <Menu />
-          </IconButton>
-        </Hidden>
-      </Toolbar>
-    </AppBar>
-  );
+    //     return function cleanup() {
+    //         if (props.changeColorOnScroll)
+    //             window.removeEventListener("scroll", headerColorChange);
+    //     };
+    // });
+
+    // const headerColorChange = () => {
+    //     if (!changeColorOnScroll) return;
+
+    //     const windowsScrollTop = window.pageYOffset;
+    //     if (windowsScrollTop > changeColorOnScroll.height) {
+    //       document.body
+    //         .getElementsByTagName("header")[0]
+    //         .classList.remove(classes[color]);
+    //       document.body
+    //         .getElementsByTagName("header")[0]
+    //         .classList.add(classes[changeColorOnScroll.color]);
+    //     } else {
+    //       document.body
+    //         .getElementsByTagName("header")[0]
+    //         .classList.add(classes[color]);
+    //       document.body
+    //         .getElementsByTagName("header")[0]
+    //         .classList.remove(classes[changeColorOnScroll.color]);
+    //     }
+    //   };
+
+      const handleDrawerToggle = () => {
+        setMobileOpen((open) => !open);
+      };
+
+      const appBarClasses = classNames({
+        [classes.appBar]: true,
+        // [classes[color]]: color,
+        // [classes.absolute]: absolute,
+        [classes.flex]: true,
+        [classes.fixed]: true
+      });
+
+      const brandComponent =
+        <Button id="app-bar" className={classes.title}>{brand}</Button>;
+
+    return <AppBar className={appBarClasses}>
+
+        <Toolbar className={classes.container}>
+            {/* {leftLinks ? brandComponent : null} */}
+            {/* { brandComponent } */}
+            {/* <div className="classes.flex">
+                {leftLinks}
+            </div> */}
+            <div className={classes.flex}>
+                {brandComponent}
+                {leftLinks}
+                {/* {leftLinks ? (
+                    <Hidden smDown implementation="css">
+                        {leftLinks}
+                    </Hidden>
+                ) : (brandComponent)} */}
+            </div>
+            {/* <Hidden smDown implementation="css">
+                {rightLinks}
+            </Hidden> */}
+
+            <IconButton
+                color="inherit"
+                aria-label="open drawer"
+                onClick={handleDrawerToggle}
+            > <icons.Menu /> </IconButton>
+
+        </Toolbar>
+        {/* <Hidden mdUp implementation="js"> */}
+            <Drawer
+                variant="temporary"
+                anchor={"right"}
+                open={mobileOpen}
+                classes={{
+                    paper: classes.drawerPaper
+                }}
+                onClose={handleDrawerToggle}
+            >
+                <div className={classes.appResponsive}>
+                {/* {leftLinks} */}
+                {rightLinks}
+                </div>
+            </Drawer>
+        {/* </Hidden> */}
+  </AppBar>
 }
 
-Header.propTypes = {
-  color: PropTypes.oneOf(["primary", "info", "success", "warning", "danger"]),
-  rtlActive: PropTypes.bool,
-  handleDrawerToggle: PropTypes.func,
-  routes: PropTypes.arrayOf(PropTypes.object)
-};
+const link = (_s: State) => ({  });
+export default linker(link, Navbar);

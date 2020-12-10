@@ -1,41 +1,53 @@
-const { env } = import.meta;
-import './initializer';
-// INITIALIZED //
-
 import 'normalize.css'
 import "styles/material-dashboard-react.css";
 import './index.scss';
 
-import ReactDOM from 'react-dom';
-import { createBrowserHistory } from "history";
-import { Router, Route, Switch, Redirect } from "react-router-dom";
-// import Dashboard from './views/Dasboard';
-// import Settings from './views/Settings';
-import Sessions from './views/Sessions';
+declare global {
+    const log: typeof console.log;
+    const env: 'production' | 'development';
+    const qok: boolean;
+}
 
-if (env.MODE === 'development') {
+(window as any).global = window;
+const g: any = (global || window);
+g.env = global.process ? 'development' : null;
+
+const glob = {
+    log: console.log,
+    qok: g.env === 'development',
+    env: g.env,
+}
+Object.assign(window, glob);
+
+// -- INITIALIZER -- //
+
+import * as React from 'react';
+import ReactDOM from 'react-dom';
+import { Router, Route, Switch, Redirect } from "react-router-dom";
+// import Sessions from './views/Sessions';
+import { browserHist } from './data/store';
+import Dasboard from './views/Dasboard';
+
+(async function() { // workaround to work with quokka.js
+    if (!g.env) (window as any).env = (await import('./env')).env.MODE;
+    ReactDOM.render(
+        <Router history={browserHist}>
+            <Switch>
+                <Route path="/dashboard" component={Dasboard} />
+                <Redirect from="/" to="/dashboard" />
+            </Switch>
+        </Router>,
+        document.getElementById('root')
+    );
+})();
+
+if (env === 'development') {
     // -- Run in DEV only -- //
 }
 
-if (env.MODE === 'production') {
+if (env === 'production') {
     // -- Run in PROD only -- //
 }
-
-const hist = createBrowserHistory();
-ReactDOM.render(
-    <Router history={hist}>
-        <Switch>
-            <Route path="/dashboard" component={Sessions} />
-            <Redirect from="/" to="/dashboard" />
-        </Switch>
-    </Router>,
-    document.getElementById('root')
-);
-
-window.addEventListener('popstate', function (event) {
-    log(event)
-	// The URL changed...
-});
 
 // Hot Module Replacement (HMR) - Remove this snippet to remove HMR.
 // Learn more: https://www.snowpack.dev/#hot-module-replacement

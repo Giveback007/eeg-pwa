@@ -8,22 +8,20 @@ import {
     warningColor,
     dangerColor,
     whiteColor,
-    grayColor
+    grayColor,
+    blackColor
 } from "../material.jss";
 
   const headerStyle = () => ({
     appBar: {
-      backgroundColor: "transparent",
-      boxShadow: "none",
+      backgroundColor: blackColor,
       borderBottom: "0",
       marginBottom: "0",
-      position: "absolute",
       width: "100%",
       paddingTop: "10px",
       zIndex: "1029",
       color: grayColor[7],
       border: "0",
-      borderRadius: "3px",
       padding: "10px 0",
       transition: "all 150ms ease 0s",
       minHeight: "50px",
@@ -74,6 +72,11 @@ import {
     },
     danger: {
       backgroundColor: dangerColor[0],
+      color: whiteColor,
+      ...defaultBoxShadow
+    },
+    dark: {
+      backgroundColor: blackColor,
       color: whiteColor,
       ...defaultBoxShadow
     }

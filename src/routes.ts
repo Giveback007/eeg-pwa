@@ -1,4 +1,4 @@
-import { icons } from "components/Icons/Icons";
+import { icons } from "src/components/icons";
 import Sessions from "views/Sessions";
 import Settings from "views/Settings";
 import Dashboard from 'views/Dasboard';

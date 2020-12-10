@@ -1,5 +1,6 @@
+import React from 'react';
 import { makeStyles } from "@material-ui/core/styles";
-import { Table, TableBody, TableHead, TableRow, TableCell } from '../material-ui';
+import { Table, TableBody, TableHead, TableRow, TableCell } from '@material-ui/core';
 import styles from "./Table.jss";
 
 // FIXME

@@ -75,7 +75,7 @@ const grayColor = [
   "#eee",
   "#e7e7e7"
 ];
-const blackColor = "#000";
+const blackColor = "#212121";
 const whiteColor = "#FFF";
 
 const boxShadow = {
@@ -249,7 +249,7 @@ const cardLink = {
 
 export {
   hexToRgb,
-  //variables
+  // variables
   drawerWidth,
   transition,
   container,
