@@ -65,6 +65,7 @@ function Navbar(props: P) {
         >{brand}</Button>;
 
     return <>
+        <div className={classes.appBarSpacer} />
         <AppBar className={appBarClasses}>
             <Toolbar className={classes.container}>
                 <div className={classes.flex}>

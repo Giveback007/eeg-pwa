@@ -29,21 +29,22 @@ const navBtns = {
     }
 }
 
+const appBarHeight = 50;
+const appBarPadding = 10;
+
 const headerStyle = () => ({
     appBar: {
+        minHeight: appBarHeight,
+        padding: `${appBarPadding}px 0`,
         backgroundColor: blackColor,
-        borderBottom: "0",
-        marginBottom: "0",
-        width: "100%",
-        paddingTop: "10px",
         zIndex: "1029",
         color: grayColor[7],
-        border: "0",
-        padding: "10px 0",
-        transition: "all 150ms ease 0s",
-        minHeight: "50px",
         display: "block",
         ...navBtns
+    },
+    appBarSpacer: {
+        minHeight: appBarHeight,
+        padding: `${appBarPadding}px 0`
     },
     appDrawer: {
         ...navBtns,
@@ -53,12 +54,12 @@ const headerStyle = () => ({
             minHeight: 50,
             fontSize: 15,
             borderBottom: 'solid 1px rgba(85, 85, 85, 0.2)',
-            borderRadius: 0
+            borderRadius: 0,
         }
     },
     container: {
         ...container,
-        minHeight: "50px"
+        minHeight: appBarHeight
     },
     flex: {
         flex: 1
