@@ -10,10 +10,16 @@ import { linker, State } from '../data/store';
 
 class SomeCode<P, S> extends Applet<P, S> {
 
-    constructor(props: P) { super(props); }
+    myDivElement: HTMLDivElement;
+
+    constructor(props: P) { super(props, {} as S); }
 
     initialize(container: HTMLDivElement, props: P, state: S) {
+        this.myDivElement = container;
 
+        this.myDivElement.innerHTML = `<div>
+            I can do what ever I want with this
+        </div>`
     }
 
     onRender(props: P, state: S, prevProps: P, prevState: S) {
@@ -22,6 +28,11 @@ class SomeCode<P, S> extends Applet<P, S> {
 
     onAction(a) {
         // local actions
+        switch (a.type) {
+            case 'DESTROY_APPLET': {
+                // clean up
+            }
+        }
     }
 }
 
@@ -29,7 +40,7 @@ class SomeCode<P, S> extends Applet<P, S> {
 
 function Dasboard() {
     return <>
-
+        <h1>Dashboard</h1>
     </>
 }
 

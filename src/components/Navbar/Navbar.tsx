@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
 import classNames from 'classnames';
 import { Drawer, makeStyles, AppBar, Toolbar, IconButton, Button, CircularProgress } from '@material-ui/core';
-import { linker, State } from 'src/data/store';
+import { browserHist, linker, State, store } from 'src/data/store';
 import { Icon, icons } from '../icons';
 
 import styles from "./Navbar.style";
+import type { UrlObj } from '@giveback007/browser-utils';
 
 // type S = { };
 type P = {
@@ -21,17 +22,26 @@ export type NavButton = {
     active?: boolean;
     loading?: boolean;
     disabled?: boolean;
+    action?: string;
+    route?: string | UrlObj;
 }
 
 function NavBtn(p: NavButton & { handleDrawerToggle?: () => void }) {
     let IC: any = p.icon ? icons[p.icon] : null;
     IC = IC ? <IC className="btn-icon" /> : null;
-    // log(p.active)
+
+    const fct = () => {
+        // if (p.action) store.action({ type: p.action });
+        if (p.route) store.setPath(p.route);
+
+        if (p.handleDrawerToggle) p.handleDrawerToggle();
+    }
+
     return (
         <Button
             disabled={p.disabled}
             className={'nav-btn ' + (p.active ? 'active' : '')}
-            onClick={p.handleDrawerToggle}
+            onClick={fct}
         >
             {p.loading ?
                 <CircularProgress

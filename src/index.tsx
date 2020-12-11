@@ -28,20 +28,24 @@ import { browserHist } from './data/store';
 import Dasboard from './views/Dashboard';
 import type { NavButton } from './components/Navbar/Navbar';
 import Navbar from 'src/components/Navbar/Navbar';
+import Settings from './views/Settings';
 
 const leftLinks: NavButton[] = [{
     icon: 'PowerSettings',
+    action: 'EEG_CONNECT'
     // active: false,
     // loading: true,
     // title: 'Connect'
     // disabled: true,
 }, {
     icon: 'PlayArrow',
+    action: 'EEG_ANALYZE'
     // active: true,
     // disabled: false,
     // title: 'Play'
 }, {
     icon: 'StopSharp',
+    action: 'EEG_STOP'
     // active: false,
     // disabled: false,
     // title: 'Stop'
@@ -49,16 +53,21 @@ const leftLinks: NavButton[] = [{
 
 const rightLinks: NavButton[] = [{
     title: 'Save CSV',
+    action: 'CSV_SAVE',
     // loading: true
 }, {
     title: 'Set BandPass',
+    action: 'BANDPASS'
     // icon: 'PlayArrow',
 }, {
-    title: 'Set Channel View'
+    title: 'Set Channel View',
+    action: 'CHANNEL_SET_VIEW',
 }, {
-    title: 'Set Tags'
+    title: 'Set Tags',
+    action: 'TAGS_SET'
 }, {
-    title: 'Settings'
+    title: 'Settings',
+    route: '/settings'
 }];
 
 !(async function() { // workaround to work with quokka.js
@@ -72,6 +81,7 @@ const rightLinks: NavButton[] = [{
         <Router history={browserHist}>
             <Switch>
                 <Route path="/dashboard" component={Dasboard} />
+                <Route path="/settings" component={Settings} />
                 <Redirect from="/" to="/dashboard" />
             </Switch>
         </Router></>,

@@ -21,14 +21,19 @@ export abstract class Applet<P, S, AppState = {}, M = {}> extends React.Componen
 
     componentDidMount() {
         if (!this._ref.current) throw new Error('<div /> container element did not render');
-        this.initialize(this._ref.current);
+        this.initialize(this._ref.current, this.props, this.state);
     }
 
     componentDidUpdate(prevProps: P, prevState: S) {
         this.onRender(this.props, this.state, prevProps, prevState);
     }
 
-    abstract initialize(container: HTMLDivElement, props: P, state: S): any;
+    componentWillUnmount() {
+        if (!this.onAction) return;
+        this.onAction({ type: 'DESTROY_APPLET' })
+    }
+
+    abstract initialize(container: HTMLDivElement, props?: P, state?: S): any;
     abstract onRender(props: P, state: S, prevProps: P, prevState: S): any;
     abstract onAction?<T = { type: string; data?: any }>(a: T): any;
 }
