@@ -23,13 +23,19 @@ class AppStateManager extends StateManager<State> {
     }
 
     setPath(url: UrlObj | string) {
-        log(browserHist)
-        if (isType(url, 'string')) return browserHist.push(url);
+        const currentPath = browserHist.location.pathname;
+        if (isType(url, 'string')) {
+            return currentPath === url ?
+                null : browserHist.push(url);
+        }
 
         const obj = { ...url };
         delete obj.origin;
 
-        browserHist.push(urlObjToString(obj));
+        const str = urlObjToString(obj);
+        if (str === currentPath) return;
+
+        browserHist.push(str);
     }
 }
 
