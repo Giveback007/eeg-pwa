@@ -16,13 +16,16 @@ const navBtnIcons = { '& .btn-icon': {
     margin: "0 5px 2px 0 !important"
 }}
 
+// &:focus,
+const navBtnFocus = { "&:hover,&:visited": {
+    color: "#8c209e"
+}}
+
 const navBtns = {
     '& .nav-btn': {
         ...navBtnIcons,
+        ...navBtnFocus,
         color: 'rgb(85, 85, 85)',
-        "&:focus,&:hover,&:visited": {
-            color: "#8c209e"
-        }
     },
     '& .active': {
         color: "#8c209e"
@@ -66,6 +69,7 @@ const headerStyle = () => ({
     },
     title: {
         ...defaultFont,
+        ...navBtnFocus,
         letterSpacing: "unset",
         lineHeight: "30px",
         fontSize: "18px",
@@ -73,9 +77,9 @@ const headerStyle = () => ({
         textTransform: "none",
         color: "inherit",
         margin: "0",
-        "&:hover,&:focus": {
-        background: "transparent"
-        }
+        // "&:hover,&:focus": {
+        //     background: "transparent"
+        // }
     },
     primary: {
         backgroundColor: primaryColor[0],

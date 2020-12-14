@@ -1,8 +1,6 @@
-import * as React from 'react';
-const glob = {
+Object.assign(window, {
+    env: import.meta.env.MODE,
     log: console.log,
-    React: React
-}
-Object.assign(window, glob);
+});
 
 export const { env } = import.meta;

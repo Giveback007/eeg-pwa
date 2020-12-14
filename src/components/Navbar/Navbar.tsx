@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
 import classNames from 'classnames';
 import { Drawer, makeStyles, AppBar, Toolbar, IconButton, Button, CircularProgress } from '@material-ui/core';
-import { browserHist, linker, State, store } from 'src/data/store';
+import { linker, State, store } from 'src/data/store';
 import { Icon, icons } from '../icons';
 
 import styles from "./Navbar.style";
-import type { UrlObj } from '@giveback007/browser-utils';
+import type { Immutable, UrlObj } from '@giveback007/browser-utils';
 
 // type S = { };
 type P = {
@@ -31,7 +31,7 @@ function NavBtn(p: NavButton & { handleDrawerToggle?: () => void }) {
     IC = IC ? <IC className="btn-icon" /> : null;
 
     const fct = () => {
-        // if (p.action) store.action({ type: p.action });
+        if (p.action) store.action({ type: p.action });
         if (p.route) store.setPath(p.route);
 
         if (p.handleDrawerToggle) p.handleDrawerToggle();
@@ -57,10 +57,10 @@ function NavBtn(p: NavButton & { handleDrawerToggle?: () => void }) {
 function Navbar(props: P) {
     const classes = useStyles();
     const [mobileOpen, setMobileOpen] = useState(() => false);
-    const { topMenuBtns: rightLinks, rightMenuBtns: leftLinks, brand } = props;
+    const { navRightLinks, navLeftLinks, brand } = props;
 
     const handleDrawerToggle = () =>
-        setMobileOpen((open) => !open)
+        setMobileOpen(open => !open);
 
     const appBarClasses = classNames({
         [classes.appBar]: true,
@@ -70,7 +70,8 @@ function Navbar(props: P) {
 
     const brandComponent =
         <Button
-            id="app-bar"
+            // id="app-bar"
+            onClick={() => store.setPath('/dashboard')}
             className={classes.title}
         >{brand}</Button>;
 
@@ -80,7 +81,7 @@ function Navbar(props: P) {
             <Toolbar className={classes.container}>
                 <div className={classes.flex}>
                     {brandComponent}
-                    {leftLinks?.map(x => NavBtn(x))}
+                    {navLeftLinks?.map(x => NavBtn(x))}
                 </div>
 
                 <IconButton
@@ -98,15 +99,11 @@ function Navbar(props: P) {
             className={classes.appDrawer}
             onClose={handleDrawerToggle}
         >
-            {rightLinks?.map(x =>
-                <>
-                {/* <hr/> */}
-                <NavBtn {...{...x, handleDrawerToggle}} />
-                </>
-            )}
+            {navRightLinks?.map(x =>
+                <NavBtn {...{...x, handleDrawerToggle}} />)}
         </Drawer>
     </>
 }
 
-const link = (_s: State) => ({  });
+const link = ({ navRightLinks, navLeftLinks }: Immutable<State>) => ({ navRightLinks, navLeftLinks });
 export default linker(link, Navbar);
