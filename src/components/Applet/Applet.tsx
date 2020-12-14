@@ -1,18 +1,21 @@
 import React from 'react';
+import type { State } from 'src/data/store';
 
-export abstract class Applet<P, S, AppState = {}, M = {}> extends React.Component<P, S> {
+export abstract class Applet<P, S, M = {}> extends React.Component<P, S> {
     private _ref = React.createRef<HTMLDivElement>();
 
     constructor(
         public props: P,
         public initState: S,
-        public mapper?: (s: AppState) => M
+        public mapper?: (s: State) => M
     ) {
         super(props);
 
         if (!this.onRender) throw new Error('onRender() not implemented');
         if (!this.initialize) throw new Error('initialize() not implemented');
     }
+
+    // shouldComponentUpdate = () => false;
 
     render = () => <div
         className="applet-container"
