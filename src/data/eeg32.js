@@ -4,8 +4,11 @@ import 'regenerator-runtime/runtime' //For async functions on node\\
 
 export class eeg32 { //Contains structs and necessary functions/API calls to analyze serial data for the FreeEEG32
 
-    constructor(onDecoded) {
+    constructor(
+		onDecoded,
+		) {
 		this.onDecoded = onDecoded;
+
         //Free EEG 32 data structure:
         /*
             [stop byte, start byte, counter byte, 32x3 channel data bytes (24 bit), 3x2 accelerometer data bytes, stop byte, start byte...]
@@ -313,7 +316,10 @@ export class eeg32 { //Contains structs and necessary functions/API calls to ana
 
 export class eegatlas {
 
-	constructor() {
+	constructor(
+		channelTags = this.setDefaultTags(),
+
+	) {
 		this.atlas = this.makeAtlas10_20(); //this.makeAtlas10_20();
 		this.channelTags = this.setDefaultTags(); //Format: [{ch:0, tag:"Fp1", viewing:true},{etc}];
 		this.coherenceMap = this.genCoherenceMap();
@@ -428,11 +434,27 @@ export class eegatlas {
 		for( var i = 0; i < (channelTags.length*(channelTags.length + 1)/2)-channelTags.length; i++){
 			var coord0 = this.getAtlasCoordByTag(channelTags[k].tag);
 			var coord1 = this.getAtlasCoordByTag(channelTags[k+l].tag);
-			coherenceMap.map.push({tag:channelTags[k].tag+":"+channelTags[l+k].tag, data:{x0:coord0.data.x,y0:coord0.data.y,z0:coord0.data.z,x1:coord1.data.x,y1:coord1.data.y,z1:coord1.data.z, times:[], amplitudes:[], slices: JSON.parse(JSON.stringify(freqBins)), means: JSON.parse(JSON.stringify(freqBins))}});
+
+			coherenceMap.map.push({
+				tag: channelTags[k].tag+":"+channelTags[l+k].tag,
+				data: {
+					x0: coord0?.data.x,
+					y0: coord0?.data.y,
+					z0: coord0?.data.z,
+					x1: coord1?.data.x,
+					y1: coord1?.data.y,
+					z1: coord1?.data.z,
+					times:[],
+					amplitudes:[],
+					slices: JSON.parse(JSON.stringify(freqBins)),
+					means: JSON.parse(JSON.stringify(freqBins))
+				}
+			});
+
 			l++;
-			if(l+k === channelTags.length){
+			if (l + k === channelTags.length) {
 				k++;
-				l=1;
+				l = 1;
 			}
 		}
 		return coherenceMap;

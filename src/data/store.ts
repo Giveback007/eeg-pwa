@@ -8,13 +8,13 @@ import type { NavButton } from "src/components/Navbar/Navbar";
 import { eegConnectNavBtn, eegDisconnectNavBtn, navLeftLinks, navRightLinks } from "./nav-bar-links";
 import { eeg32, eegatlas, eegmath } from './eeg32'
 
-export let eegConnection = new eeg32((data) => store.setEEGData(data));
-export const ATLAS = new eegatlas();
-ATLAS.channelTags = [
-  {ch: 4, tag: "T3", viewing: true},
-  {ch: 24, tag: "T4", viewing: true}
-];
-ATLAS.coherenceMap = ATLAS.genCoherenceMap();
+export let eegConnection = new eeg32(
+    (data: any) => store.setEEGData(data),
+);
+export const ATLAS = new eegatlas([
+    {ch: 4, tag: "T3", viewing: true},
+    {ch: 24, tag: "T4", viewing: true}
+]);
 
 export type State = {
     url: ReturnType<typeof getUrlParams>;
@@ -61,14 +61,14 @@ const initState: State = {
     scalar: 1/(0.000001 / (eegConnection.vref*eegConnection.stepSize)),
     // anim: null,
     analyze: false,
-    analyzeloop: null,
+    // analyzeloop: null,
     rawfeed: false,
-    rawfeedloop: null,
+    // rawfeedloop: null,
 
 }
 
 class AppStateManager extends StateManager<State> {
-    data
+    // data
     constructor() {
         super(initState);
         browserHist.listen(() =>
@@ -102,7 +102,7 @@ class AppStateManager extends StateManager<State> {
     }
 
     setEEGData(data: any) {
-        this.data = data;
+        // this.data = data;
     }
 }
 
