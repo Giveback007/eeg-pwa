@@ -1,34 +1,109 @@
+import { equal } from '@giveback007/util-lib';
 import React from 'react';
-import type { State } from 'src/data/store';
+import { State, store } from 'src/data/store';
 
-export abstract class Applet<P, S, M = {}> extends React.Component<P, S> {
+export type AppletSetting<S, T extends string = string> = {
+    type: 'options',
+    key: keyof S,
+    selections: T[],
+    name?: string,
+    default?: T,
+} | {
+    type: 'button',
+    name: string,
+    action: T,
+}
+
+export abstract class Applet<S, M = {}> extends React.Component<M, S> {
+    viewData: S & M = {} as any;
+    state: S = {} as any;
+    private mapped: M = {} as any;
     private _ref = React.createRef<HTMLDivElement>();
+    private settings: AppletSetting<S>[] = [];
 
     constructor(
-        public props: P,
-        public initState: S,
+        public props: any,
         public mapper?: (s: State) => M
     ) {
         super(props);
 
-        if (!this.onRender) throw new Error('onRender() not implemented');
-        if (!this.initialize) throw new Error('initialize() not implemented');
+        if (!this.onViewData) {
+            console.log('this:', this);
+            throw new Error('onRender() not implemented');
+        }
+
+        if (!this.initialize) {
+            console.log('this:', this);
+            throw new Error('initialize() not implemented');
+        }
+
+        if (mapper) {
+            this.mapped = this.mapper(store.getState());
+            this.viewData = {...this.state, ...this.mapped};
+        };
     }
 
-    // shouldComponentUpdate = () => false;
+    renderSettings(settings: AppletSetting<S>[]) {
+        settings.forEach(set => {
+            if (set.type === 'options' && !this.state[set.key])
+                this.state[set.key] = set.default as any;
+        })
 
-    render = () => <div
-        className="applet-container"
-        ref={this._ref}
-    />
+        if (this.settings !== settings) {
+            this.settings = settings;
+            this.forceUpdate(); // ???????
+        }
+    }
+
+    render = () => <>
+        {this.settings.map((set) => {
+            if (set.type === 'button') {
+                return <button onClick={() => (this.onAction as any)({ type: set.action })}>
+                    {set.name}
+                </button>;
+            }
+
+            if (set.type === 'options')
+                return (<>
+                {set.name ? <label>{set.name ? set.name : ''}</label> : null}
+                    <select
+                        value={this.state[set.key] as any}
+                        onChange={(e) => this.setState({ [set.key]: e.target.value } as any)}
+                    >
+                        {set.selections.map((slc) => <option value={slc}>{slc}</option>)}
+                    </select>
+                </>);
+
+            return null;
+        })}
+        <div
+            className="applet-container"
+            ref={this._ref}
+        />
+    </>;
+
+    triggerView = (mapped: M, state: S) => {
+        const prev = this.viewData;
+        this.viewData = { ...mapped, ...state };
+
+        this.onViewData(this.viewData, prev);
+    }
 
     componentDidMount() {
         if (!this._ref.current) throw new Error('<div /> container element did not render');
-        this.initialize(this._ref.current, this.props, this.state);
+
+        if (this.mapper) store.stateSub((s) => {
+            const mapped = this.mapper(s);
+            if (equal(this.mapped, mapped)) return;
+
+            this.triggerView(mapped, this.state);
+        });
+
+        this.initialize(this._ref.current, { ...this.mapped, ...this.state });
     }
 
-    componentDidUpdate(prevProps: P, prevState: S) {
-        this.onRender(this.props, this.state, prevProps, prevState);
+    componentDidUpdate() {
+        this.triggerView(this.mapped, this.state);
     }
 
     componentWillUnmount() {
@@ -36,7 +111,7 @@ export abstract class Applet<P, S, M = {}> extends React.Component<P, S> {
         this.onAction({ type: 'DESTROY_APPLET' })
     }
 
-    abstract initialize(container: HTMLDivElement, props?: P, state?: S): any;
-    abstract onRender(props: P, state: S, prevProps: P, prevState: S): any;
+    abstract initialize(container: HTMLDivElement, viewData?: S & M): any;
+    abstract onViewData(viewData: S & M, prevViewData: S & M): any;
     abstract onAction?<T = { type: string; data?: any }>(a: T): any;
 }

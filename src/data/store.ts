@@ -2,25 +2,35 @@ import {
     getUrlParams, StateManager, stateManagerReactLinker, UrlObj,
     urlObjToString
 } from "@giveback007/browser-utils";
-import { isType, wait } from '@giveback007/util-lib';
+import { interval, isType, rand, wait } from '@giveback007/util-lib';
 import { createBrowserHistory } from "history";
 import type { NavButton } from "src/components/Navbar/Navbar";
 import { eegConnectNavBtn, eegDisconnectNavBtn, navLeftLinks, navRightLinks } from "./nav-bar-links";
 import { eeg32, eegatlas, eegmath } from './eeg32'
 
-export let eegConnection = new eeg32(
-    (data: any) => store.setEEGData(data),
-);
-export const ATLAS = new eegatlas([
-    {ch: 4, tag: "T3", viewing: true},
-    {ch: 24, tag: "T4", viewing: true}
-]);
+const channels: Channel[] = [
+    { ch: 4, tag: "T3", viewing: true },
+    { ch: 24, tag: "T4", viewing: true }
+];
+
+export const ATLAS = new eegatlas(channels);
+export const eegConnection = new eeg32((data: any) => store.setEEGData(data));
+
+export type Channel = {
+    ch: number;
+    tag: string;
+    viewing: boolean;
+}
 
 export type State = {
     url: ReturnType<typeof getUrlParams>;
     navLeftLinks: NavButton[];
     navRightLinks: NavButton[];
-    data: any;
+
+    data: any; // FIXME
+    lastVal: any // FIXME
+
+    channels: Channel[],
 
     nSec: number,
     freqStart: number,
@@ -43,8 +53,10 @@ const initState: State = {
     url: getUrlParams(),
     navLeftLinks,
     navRightLinks,
-    data: {},
 
+    data: [],
+    lastVal: {},
+    channels: channels,
 
     nSec: 1,
     freqStart: 0,
@@ -102,7 +114,7 @@ class AppStateManager extends StateManager<State> {
     }
 
     setEEGData(data: any) {
-        // this.data = data;
+        this.setState({ lastVal: data })
     }
 }
 
@@ -110,6 +122,16 @@ export const browserHist = createBrowserHistory();
 export const store = new AppStateManager();
 export const linker = stateManagerReactLinker(store);
 
+const r = () => rand(1, 9);
+interval(() => {
+    store.setEEGData({
+        T3: r(),
+        T4: r(),
+        time: Date.now(),
+    });
+}, 200);
+
+// store.stateSub(s => log(s));
 
 store.actionSub(true, a => {
     switch (a.type) {
@@ -126,4 +148,4 @@ store.actionSub(true, a => {
             break;
         }
     }
-})
+});

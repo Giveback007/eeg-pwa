@@ -1,46 +1,15 @@
 import React from 'react';
-import { Applet } from 'src/components/Applet/Applet';
+import { BasicPlotExample } from 'src/components/BasicExample/BasicExample';
 import { linker, State } from '../data/store';
 
 
 // type S = { };
 // type P = { } & ReturnType<typeof link>;
 
-
-
-class SomeCode<P, S> extends Applet<P, S> {
-
-    myDivElement: HTMLDivElement;
-
-    constructor(props: P) { super(props, {} as S); }
-
-    initialize(container: HTMLDivElement, props: P, state: S) {
-        this.myDivElement = container;
-
-        this.myDivElement.innerHTML = `<div>
-            I can do what ever I want with this
-        </div>`
-    }
-
-    onRender(props: P, state: S, prevProps: P, prevState: S) {
-        // local state & props
-    }
-
-    onAction(a) {
-        // local actions
-        switch (a.type) {
-            case 'DESTROY_APPLET': {
-                // clean up
-            }
-        }
-    }
-}
-
-
-
 function Dasboard() {
     return <>
-        <h1>Dashboard</h1>
+        {/* <h1>Dashboard</h1> */}
+        <BasicPlotExample />
     </>
 }
 
