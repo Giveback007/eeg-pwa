@@ -1,5 +1,6 @@
 import React from 'react';
 import { BasicPlotExample } from 'src/components/BasicExample/BasicExample';
+import { SmoothPlotComponent } from 'src/components/SmoothiePlot/SmoothiePlot';
 import { linker, State } from '../data/store';
 
 
@@ -10,6 +11,7 @@ function Dasboard() {
     return <>
         {/* <h1>Dashboard</h1> */}
         <BasicPlotExample />
+        {/* <SmoothPlotComponent /> */}
     </>
 }
 

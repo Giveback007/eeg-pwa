@@ -316,12 +316,10 @@ export class eeg32 { //Contains structs and necessary functions/API calls to ana
 
 export class eegatlas {
 
-	constructor(
-		channelTags = this.setDefaultTags(),
+	constructor(channelTags = this.setDefaultTags()) {
 
-	) {
 		this.atlas = this.makeAtlas10_20(); //this.makeAtlas10_20();
-		this.channelTags = this.setDefaultTags(); //Format: [{ch:0, tag:"Fp1", viewing:true},{etc}];
+		this.channelTags = channelTags; //Format: [{ch:0, tag:"Fp1", viewing:true},{etc}];
 		this.coherenceMap = this.genCoherenceMap();
 	}
 

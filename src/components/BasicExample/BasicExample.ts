@@ -10,7 +10,8 @@ type S = {
 }
 
 type M = {
-    channelTags: Channel[]
+    channelTags: Channel[],
+    // lastVal: any
 }
 
 export class BasicPlotExample extends Applet<S, M> {
@@ -40,6 +41,11 @@ export class BasicPlotExample extends Applet<S, M> {
                 const { tag } = ch;
                 this.series[tag].append(s.lastVal.time, s.lastVal[tag]);
             });
+        });
+
+        // store.stateSub(s => s)
+        store.actionSub(true, a => {
+            log('another!', a)
         })
 
         this.chart.streamTo(this.canvasElm, 500);
