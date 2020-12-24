@@ -16,8 +16,8 @@ type M = {
     // lastVal: any
 }
 
-export class SmoothPlotComponent extends Applet<{}, {}> {
+export class SmoothPlotComponent extends Applet<S, M> {
     constructor(props: any) {
-        super(props, (s) => ({ channelTags: s.channels }))
+        super(props, (s) => ({ channelTags: s.basicExampleChannels }))
     }
 }

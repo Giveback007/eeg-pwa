@@ -2,26 +2,11 @@ import {
     getUrlParams, StateManager, stateManagerReactLinker, UrlObj,
     urlObjToString
 } from "@giveback007/browser-utils";
-import { interval, isType, Optional, rand, wait } from '@giveback007/util-lib';
+import { Dict, isType, wait } from '@giveback007/util-lib';
 import { createBrowserHistory } from "history";
 import type { NavButton } from "src/components/Navbar/Navbar";
+import { eegConnection } from "./eeg-initializer";
 import { eegConnectNavBtn, eegDisconnectNavBtn, navLeftLinks, navRightLinks } from "./nav-bar-links";
-import { eeg32, eegatlas, eegmath } from './eeg32'
-
-const channels: Channel[] = [
-    { ch: 4, tag: "T3" },
-    { ch: 24, tag: "T4" },
-    { ch: 5, tag: null}
-];
-
-export const ATLAS = new eegatlas(channels);
-export const eegConnection = new eeg32((data: any) => store.setEEGData(data));
-
-export type Channel = {
-    ch: number;
-    tag: string | null;
-    name: string;
-}
 
 type ChannelAction = {
     type: 'TAG_SET',
@@ -34,9 +19,8 @@ export type State = {
     navRightLinks: NavButton[];
 
     data: any; // FIXME
-    lastVal: any // FIXME
-
-    viewChannels: Channel[],
+    lastVal: Dict<number> | null; // FIXME
+    basicExampleChannels: string[]; // not correct, simply being used for basic example.
 
     nSec: number,
     freqStart: number,
@@ -46,13 +30,13 @@ export type State = {
     coherenceResults: number[],
     bandPassWindow: number[],
     nSecAdcGraph: number,
-    fdbackmode: "coherence" | "scp",
+    fdBackMode: "coherence" | "scp",
     newMsg: boolean,
-    vscale: number,
+    vScale: number,
     stepsPeruV: number,
     scalar: number,
     analyze: boolean,
-    rawfeed: boolean,
+    rawFeed: boolean,
 }
 
 const initState: State = {
@@ -62,7 +46,7 @@ const initState: State = {
 
     data: [],
     lastVal: {},
-    viewChannels: ATLAS.channelTags,
+    basicExampleChannels: ['T2', 'T4'],
 
     nSec: 1,
     freqStart: 0,
@@ -72,21 +56,18 @@ const initState: State = {
     coherenceResults: [],
     bandPassWindow: [],
     nSecAdcGraph: 10,
-    fdbackmode: "coherence",
+    fdBackMode: "coherence",
     newMsg: true,
-    vscale: eegConnection.vref*eegConnection.stepSize,
-    stepsPeruV: 0.000001 / (eegConnection.vref*eegConnection.stepSize),
-    scalar: 1/(0.000001 / (eegConnection.vref*eegConnection.stepSize)),
-    // anim: null,
+    vScale: eegConnection.vref * eegConnection.stepSize,
+    stepsPeruV: 0.000001 / (eegConnection.vref * eegConnection.stepSize),
+    scalar: 1 / (0.000001 / (eegConnection.vref * eegConnection.stepSize)),
     analyze: false,
-    // analyzeloop: null,
-    rawfeed: false,
-    // rawfeedloop: null,
+    rawFeed: false,
 
 }
 
 class AppStateManager extends StateManager<State> {
-    // data
+
     constructor() {
         super(initState);
         browserHist.listen(() =>
@@ -119,15 +100,10 @@ class AppStateManager extends StateManager<State> {
         this.setState({ [key]: arr });
     }
 
-    // setStateThrotled
-
-    // throtledState = {};
-    setEEGData(data: any) {
-        // this.throtledState = state;
-        // setTimeout(() => {
-        //     if ()
-        // }, 50)
-        this.setState({ lastVal: data })
+    setEegData(data: any) { // FIXME
+      this.throttledSetState(50, {
+        lastVal: data
+      })
     }
 }
 
@@ -135,34 +111,26 @@ export const browserHist = createBrowserHistory();
 export const store = new AppStateManager();
 export const linker = stateManagerReactLinker(store);
 
-const r = () => rand(1, 9);
-interval(() => {
-    store.setEEGData({
-        T3: r(),
-        T4: r(),
-        time: Date.now(),
-    });
-}, 200);
-
-// store.stateSub(s => log(s));
-
-store.actionSub(true, a => {
+store.actionSub(true, async (a) => {
     switch (a.type) {
         case "EEG_CONNECT": {
-            eegConnection.setupSerialAsync();
             store.changeNavBtn('left', 0, { ...eegDisconnectNavBtn, loading: true });
-            wait(800).then(() => store.changeNavBtn('left', 0, eegDisconnectNavBtn));
+            await eegConnection.setupSerialAsync();
+            await wait(500); // creates a sense of a more responsive ui
+            store.changeNavBtn('left', 0, eegDisconnectNavBtn);
             break;
         }
         case "EEG_DISCONNECT": {
-            eegConnection.closePort();
             store.changeNavBtn('left', 0, { ...eegConnectNavBtn, loading: true });
-            wait(800).then(() => store.changeNavBtn('left', 0, eegConnectNavBtn));
+            await eegConnection.closePort();
+            await wait(500); // creates a sense of a more responsive ui
+            store.changeNavBtn('left', 0, eegConnectNavBtn);
             break;
         }
-        case "SET_TAG": {
+        case "TAG_SET": {
             const { data } = a;
             // data = '1' | '2'
+            break;
         }
     }
 });

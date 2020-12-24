@@ -2,7 +2,7 @@
 
 import 'regenerator-runtime/runtime' //For async functions on node\\
 
-export class eeg32 { //Contains structs and necessary functions/API calls to analyze serial data for the FreeEEG32
+export class Eeg32 { //Contains structs and necessary functions/API calls to analyze serial data for the FreeEEG32
 
     constructor(
 		onDecoded,
@@ -23,7 +23,7 @@ export class eeg32 { //Contains structs and necessary functions/API calls to ana
 		this.nChannels = 32;
 		this.nPeripheralChannels = 6; // accelerometer and gyroscope (2 bytes * 3 coordinates each)
 		this.updateMs = 1000/this.sps; //even spacing
-		this.stepSize = 1/(Math.pow(2,24));
+		this.stepSize = 1/Math.pow(2,24);
 		this.vref = 2.50; //2.5V voltage ref +/- 250nV
 
 		this.vscale = this.vref*this.stepSize;
@@ -314,7 +314,7 @@ export class eeg32 { //Contains structs and necessary functions/API calls to ana
 }
 
 
-export class eegatlas {
+export class EegAtlas {
 
 	constructor(channelTags = this.setDefaultTags()) {
 
@@ -504,7 +504,7 @@ export class eegatlas {
 
 }
 
-export class eegmath {
+export class EegMath {
 	constructor() {
 
 	}
@@ -670,7 +670,7 @@ export class eegmath {
 		dat.forEach((row1,i) => {
 			dat.forEach((row2,j) => {
 				if(j >= i) {
-					correlograms.push(eegmath.crosscorrelation(row1,row2));
+					correlograms.push(EegMath.crosscorrelation(row1,row2));
 				}
 			})
 		});

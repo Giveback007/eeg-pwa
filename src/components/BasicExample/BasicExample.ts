@@ -1,8 +1,22 @@
-import type { Dict } from "@giveback007/util-lib";
+import { Dict, equal, rand } from "@giveback007/util-lib";
 import { html, render } from "lit-html";
 import { SmoothieChart, TimeSeries } from "smoothie";
-import { Channel, store } from "src/data/store";
+import { State, store } from "src/data/store";
 import { Applet } from "../Applet/Applet"
+
+// -- GEN DATA FOR EXAMPLE -- //
+store.stateSub('lastVal', ({ lastVal, basicExampleChannels: ch }) => {
+    const x = { ...(lastVal || { }) };
+    ch.forEach(c => {
+        if (!x[c]) x[c] = rand(1, 10000);
+        let n = x[c] + rand(-20, 20);
+        x[c] = n > 0 ? n : 0;
+    });
+
+    x.time = Date.now();
+    setTimeout(() => store.setEegData(x), 200);
+});
+// -- GEN DATA FOR EXAMPLE -- //
 
 type S = {
     mode: string,
@@ -10,14 +24,14 @@ type S = {
 }
 
 type M = {
-    channelTags: Channel[],
+    channels: State['basicExampleChannels'],
     // lastVal: any
 }
 
 export class BasicPlotExample extends Applet<S, M> {
     container: HTMLDivElement | null = null;
     canvasElm = document.createElement('canvas');
-    series: Dict<TimeSeries> = {};
+    series: Dict<TimeSeries> = { };
     chart = new SmoothieChart({
         interpolation: 'linear',
         scaleSmoothing: 0.7
@@ -26,63 +40,61 @@ export class BasicPlotExample extends Applet<S, M> {
     randomClicks = 0;
 
     constructor(props: any) {
-        super(props, (s) => ({ channelTags: s.channels }));
+        super(props, (s) => ({ channels: s.basicExampleChannels }));
     }
 
     initialize(container: HTMLDivElement, state: S & M) {
         this.container = container;
         this.container.appendChild(this.canvasElm);
 
-        state.channelTags
-            .forEach(tag => this.series[tag.tag] = new TimeSeries())
+        store.stateSub('basicExampleChannels', (s) => {
+            const ch = s.basicExampleChannels;
 
-        store.keysSub('lastVal', (s) => {
-            s.channels.forEach((ch) => {
-                const { tag } = ch;
-                this.series[tag].append(s.lastVal.time, s.lastVal[tag]);
+            ch.forEach(ch => {
+                if (this.series[ch]) return;
+                this.series[ch] = new TimeSeries();
+            });
+
+            this.renderSettings([{
+                type: 'options',
+                name: 'Mode',
+                key: 'mode',
+                selections: ['Mode-1', 'Mode-2', 'Mode-3'],
+                default: 'Mode-2',
+            }, {
+                type: 'options',
+                name: 'Channels',
+                key: 'channel',
+                selections: ch.map(c => c),
+            }, {
+                type: 'button',
+                name: 'Random Button',
+                action: 'RANDOM_CLICK',
+            }]);
+        }, true);
+
+        store.stateSub('lastVal', (s) => {
+            if (!s.lastVal) return;
+
+            s.basicExampleChannels.forEach((ch) => {
+                this.series[ch].append((s.lastVal as any).time, (s.lastVal as any)[ch]);
             });
         });
 
-        // store.stateSub(s => s)
-        store.actionSub(true, a => {
-            log('another!', a)
-        })
-
         this.chart.streamTo(this.canvasElm, 500);
-        // debugger
-        this.renderSettings([{
-            type: 'options',
-            name: 'Mode',
-            key: 'mode',
-            selections: ['Mode-1', 'Mode-2', 'Mode-3'],
-            default: 'Mode-2'
-        }, {
-            type: 'options',
-            name: 'Channels',
-            key: 'channel',
-            selections: state.channelTags.map(ch =>  ch.tag),
-            default: 'T4',
-        }, {
-            type: 'button',
-            name: 'Random Button',
-            action: 'RANDOM_CLICK'
-        }]);
     }
 
     onViewData(viewData: S & M, prev: S & M) {
-        log('UPDATE!', viewData);
+        log('BasicPlotExample UPDATE!', viewData);
 
         if (viewData.channel !== prev.channel) {
             if (prev.channel) this.chart.removeTimeSeries(this.series[prev.channel]);
 
             const ser = this.series[viewData.channel];
-            // window.ser = () => ser;
             this.chart.addTimeSeries(ser, {
                 strokeStyle: 'rgba(12, 154, 176, 1)',
                 lineWidth: 2
             });
-            // debugger
-            // this.chart.streamTo(this.canvasElm, 500);
         }
 
         this.updateView();
@@ -98,19 +110,15 @@ export class BasicPlotExample extends Applet<S, M> {
             <h3>Mode: ${this.viewData.mode}</h3>
             <h3>Random Clicks: ${this.randomClicks}</h3>
         `, this.container);
-    };
+    }
 
     onAction(a: any) {
         switch (a.type) {
             case 'DESTROY_APPLET':
-                return this.deInit();
+                return this.chart.stop();
             case 'RANDOM_CLICK':
                 this.randomClicks++;
                 return this.updateView();
         }
-    }
-
-    deInit() {
-        this.chart.stop();
     }
 }

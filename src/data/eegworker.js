@@ -3,7 +3,7 @@
 //var parentpath = localpath.substr(0,localpath.lastIndexOf("/"));
 
 import { gpuUtils } from './utils/gpuUtils.js';
-import { eegmath } from './eeg32';
+import { EegMath } from './eeg32';
 
 
 const gpu = new gpuUtils();
@@ -15,19 +15,19 @@ onmessage = (e) => {
 
   switch (e.data.foo) {
     case "xcor": // Takes 2 1D arrays
-      output = eegmath.crosscorrelation(e.data.input[0],e.data.input[1]);
+      output = EegMath.crosscorrelation(e.data.input[0],e.data.input[1]);
       break;
     case "autocor": // Takes 1 1D array
-      output = eegmath.autocorrelation(e.data.input);
+      output = EegMath.autocorrelation(e.data.input);
       break;
     case "cov1d": // Takes 2 1D arrays
-      output = eegmath.cov1d(e.data.input[0],e.data.input[1]);
+      output = EegMath.cov1d(e.data.input[0],e.data.input[1]);
       break;
     case "cov2d": // Takes 1 2D array with equal width rows
-      output = eegmath.cov2d(e.data.input);
+      output = EegMath.cov2d(e.data.input);
       break;
     case "sma": // Takes 1 1D array and an sma window size
-      output = eegmath.sma(e.data.input[0],e.data.input[1]);
+      output = EegMath.sma(e.data.input[0],e.data.input[1]);
       break;
     case "dft": // Takes 1 1D array and the number of seconds, and an optional scalar value
       var scalar = 1;
@@ -45,7 +45,7 @@ onmessage = (e) => {
       output = gpu.MultiChannelDFT_Bandpass(e.data.input[0],e.data.input[1],e.data.input[2],e.data.input[3],scalar);
       break;
     case "coherence": // Input 2D array, number of seconds, beginning frequency, ending frequency. Outputs an array of products of each FFT with each associated correlogram to create a network map of all available channels, ordered by channel
-      const correlograms = eegmath.correlograms(e.data.input[0]); 
+      const correlograms = EegMath.correlograms(e.data.input[0]);
       const buffer = [...e.data.input[0],...correlograms];
       var dfts;
 
@@ -54,10 +54,10 @@ onmessage = (e) => {
       dfts = gpu.MultiChannelDFT_Bandpass(buffer, e.data.input[1], e.data.input[2], e.data.input[3], scalar);
       const cordfts = dfts[1].splice(e.data.input[0].length, buffer.length-e.data.input[0].length);
       //console.log(cordfts)
-      
-      const coherenceResults = []; 
+
+      const coherenceResults = [];
       const nChannels = e.data.input[0].length;
-      
+
       //cross-correlation dfts arranged like e.g. for 4 channels: [0:0, 0:1, 0:2, 0:3, 1:1, 1:2, 1:3, 2:2, 2:3, 3:3] etc.
       var k=0;
       var l=0;
@@ -74,7 +74,7 @@ onmessage = (e) => {
       //Now arranged like [0:0,1:1,2:2,3:3,0:1,0:2,0:3,1:2,1:3,2:3]
 
       //Outputs FFT coherence data in order of channel data inputted e.g. for 4 channels resulting DFTs = [0:1,0:2,0:3,1:2,1:3,2:3];
-     
+
       var autoFFTproducts = [];
       k = 0;
       l = 1;
@@ -89,7 +89,7 @@ onmessage = (e) => {
         else{ //now multiply cross correlograms
           //var timeMod = (e.data.input[1]-1)*.3333333; //Scaling for longer time intervals
           //if(timeMod <= 1) { timeMod = 1; }
-          dft.forEach((amp,j) => {           
+          dft.forEach((amp,j) => {
               newdft[j] = amp*autoFFTproducts[k][j]*autoFFTproducts[k+l][j]*1.6666666;
           });
           l++;
@@ -102,7 +102,7 @@ onmessage = (e) => {
       });
       output = [dfts[0], dfts[1], coherenceResults];
 
-      
+
       break;
   }
 

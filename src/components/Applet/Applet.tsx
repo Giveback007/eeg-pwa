@@ -17,6 +17,9 @@ export type AppletSetting<S, T extends string = string> = {
 export abstract class Applet<S, M = {}> extends React.Component<M, S> {
     viewData: S & M = {} as any;
     state: S = {} as any;
+
+    private storeSub: any = null;
+
     private mapped: M = {} as any;
     private _ref = React.createRef<HTMLDivElement>();
     private settings: AppletSetting<S>[] = [];
@@ -29,7 +32,7 @@ export abstract class Applet<S, M = {}> extends React.Component<M, S> {
 
         if (!this.onViewData) {
             console.log('this:', this);
-            throw new Error('onRender() not implemented');
+            throw new Error('onViewData() not implemented');
         }
 
         if (!this.initialize) {
@@ -38,16 +41,20 @@ export abstract class Applet<S, M = {}> extends React.Component<M, S> {
         }
 
         if (mapper) {
-            this.mapped = this.mapper(store.getState());
+            this.mapped = mapper(store.getState());
             this.viewData = {...this.state, ...this.mapped};
         };
     }
 
     renderSettings(settings: AppletSetting<S>[]) {
         settings.forEach(set => {
-            if (set.type === 'options' && !this.state[set.key])
-                this.state[set.key] = set.default as any;
-        })
+            if (set.type === 'options' && !this.state[set.key]) {
+                const def = set.default || set.selections[0];
+                if (!def) return;
+
+                this.state[set.key] = def as any;
+            }
+        });
 
         if (this.settings !== settings) {
             this.settings = settings;
@@ -92,8 +99,8 @@ export abstract class Applet<S, M = {}> extends React.Component<M, S> {
     componentDidMount() {
         if (!this._ref.current) throw new Error('<div /> container element did not render');
 
-        if (this.mapper) store.stateSub((s) => {
-            const mapped = this.mapper(s);
+        if (this.mapper) this.storeSub = store.stateSub(true, (s) => {
+            const mapped = (this.mapper as (s: State) => M)(s);
             if (equal(this.mapped, mapped)) return;
 
             this.triggerView(mapped, this.state);
@@ -108,7 +115,8 @@ export abstract class Applet<S, M = {}> extends React.Component<M, S> {
 
     componentWillUnmount() {
         if (!this.onAction) return;
-        this.onAction({ type: 'DESTROY_APPLET' })
+        this.storeSub.unsubscribe();
+        this.onAction({ type: 'DESTROY_APPLET' });
     }
 
     abstract initialize(container: HTMLDivElement, viewData?: S & M): any;
