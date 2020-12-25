@@ -32,9 +32,6 @@ export type State = {
     nSecAdcGraph: number,
     fdBackMode: "coherence" | "scp",
     newMsg: boolean,
-    vScale: number,
-    stepsPeruV: number,
-    scalar: number,
     analyze: boolean,
     rawFeed: boolean,
 }
@@ -48,19 +45,15 @@ const initState: State = {
     lastVal: {},
     basicExampleChannels: ['T2', 'T4'],
 
-    nSec: 1,
-    freqStart: 0,
-    freqEnd: 100,
-    lastPostTime: 0,
-    posFFTList: [],
-    coherenceResults: [],
-    bandPassWindow: [],
+    nSec: 1, // Number of seconds of FFT data to process
+    freqStart: 0, // Beginning of bandpass window
+    freqEnd: 100, // End of bandpass window
+    lastPostTime: 0, //Last time when data was posted to worker
+    posFFTList: [], // List of FFT results from worker
+    coherenceResults: [], // List of coherence results from worker
     nSecAdcGraph: 10,
     fdBackMode: "coherence",
     newMsg: true,
-    vScale: eegConnection.vref * eegConnection.stepSize,
-    stepsPeruV: 0.000001 / (eegConnection.vref * eegConnection.stepSize),
-    scalar: 1 / (0.000001 / (eegConnection.vref * eegConnection.stepSize)),
     analyze: false,
     rawFeed: false,
 

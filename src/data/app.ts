@@ -1,7 +1,7 @@
 import { eeg32, eegatlas, eegmath } from './eeg32'
 import {SmoothieChartMaker, uPlotMaker, TimeChartMaker, Spectrogram, mirrorBarChart, eegBarChart, brainMap2D, BufferLoader, SoundJS, geolocateJS} from './eegvisuals'
 import {gpuUtils} from './gpuUtils'
-import { html } from 'lit-html';
+import { html, render } from 'lit-html';
 import { store, eegConnection as EEG, ATLAS } from './store';
 import { Applet } from 'src/components/Applet/Applet';
 
@@ -28,7 +28,7 @@ export class SmoothChart extends Applet {
     // container:
     // x = {
     id: containerId,
-    elem: null,
+    parent: null,
     child: null,
     width: width,
     height: height,
@@ -38,9 +38,8 @@ export class SmoothChart extends Applet {
     constructor(props) {
         super(props, {});
 
-        this.storeSub = store.stateSub((s) => {
-            // change these on global change
-        })
+        
+
     }
 
     container: HTMLDivElement | null = null;

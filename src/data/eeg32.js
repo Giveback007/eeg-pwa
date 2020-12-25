@@ -2,7 +2,7 @@
 
 import 'regenerator-runtime/runtime' //For async functions on node\\
 
-export class Eeg32 { //Contains structs and necessary functions/API calls to analyze serial data for the FreeEEG32
+export class eeg32 { //Contains structs and necessary functions/API calls to analyze serial data for the FreeEEG32
 
     constructor(
 		onDecoded,
@@ -25,8 +25,9 @@ export class Eeg32 { //Contains structs and necessary functions/API calls to ana
 		this.updateMs = 1000/this.sps; //even spacing
 		this.stepSize = 1/Math.pow(2,24);
 		this.vref = 2.50; //2.5V voltage ref +/- 250nV
+		this.gain = 8;
 
-		this.vscale = this.vref*this.stepSize;
+		this.vscale = this.vref*this.stepSize*this.gain;
 		this.stepsPeruV = 0.000001 / (this.vref*this.stepSize);
 		this.scalar = 1/(0.000001 / (this.vref*this.stepSize));
 
@@ -314,11 +315,11 @@ export class Eeg32 { //Contains structs and necessary functions/API calls to ana
 }
 
 
-export class EegAtlas {
+export class eegAtlas {
 
 	constructor(channelTags = this.setDefaultTags()) {
 
-		this.atlas = this.makeAtlas10_20(); //this.makeAtlas10_20();
+		this.fftMap = this.makeAtlas10_20(); //this.makeAtlas10_20();
 		this.channelTags = channelTags; //Format: [{ch:0, tag:"Fp1", viewing:true},{etc}];
 		this.coherenceMap = this.genCoherenceMap();
 	}
@@ -345,7 +346,7 @@ export class EegAtlas {
 	//Return the object corresponding to the atlas tag
 	getAtlasCoordByTag(tag="Fp1"){
 		var found = undefined;
-		let atlasCoord = this.atlas.map.find((o, i) => {
+		let atlasCoord = this.fftMap.map.find((o, i) => {
 			if(o.tag === tag){
 				found = o;
 				return true;
@@ -357,8 +358,8 @@ export class EegAtlas {
 	//Return an array of Array(3)s for each coordinate. Useful e.g. for graphics
 	getAtlasCoordsList() {
 		var coords = [];
-		for(var i = 0; i< this.atlas.length; i++) {
-		coords.push([this.atlas.map[i].data.x,this.atlas.map[i].data.y,this.atlas.map[i].data.z]);
+		for(var i = 0; i< this.fftMap.length; i++) {
+		coords.push([this.fftMap.map[i].data.x,this.fftMap.map[i].data.y,this.fftMap.map[i].data.z]);
 
 		}
 		return coords;
@@ -396,7 +397,7 @@ export class EegAtlas {
 		// Based on MNI atlas.
 		var freqBins = {scp: [], delta: [], theta: [], alpha1: [], alpha2: [], beta: [], lowgamma: [], highgamma: []};
 
-		return {shared: {sps: this.sps, bandPassWindow:[], bandFreqs:{scp:[[],[]], delta:[[],[]], theta:[[],[]], alpha:[[],[]], beta:[[],[]], lowgamma:[[],[]], highgamma:[[],[]]} //x axis values and indices for named EEG frequency bands
+		return {shared: {sps: this.sps, bandPassWindow:[], bandFreqs:{scp:[[],[]], delta:[[],[]], theta:[[],[]], alpha1:[[],[]], alpha2:[[],[]], beta:[[],[]], lowgamma:[[],[]], highgamma:[[],[]]} //x axis values and indices for named EEG frequency bands
 		}, map:[
 			{tag:"Fp1", data: { x: -21.5, y: 70.2,   z: -0.1,  times: [], amplitudes: [], slices: JSON.parse(JSON.stringify(freqBins)), means: JSON.parse(JSON.stringify(freqBins))}},
 			{tag:"Fp2", data: { x: 28.4,  y: 69.1,   z: -0.4,  times: [], amplitudes: [], slices: JSON.parse(JSON.stringify(freqBins)), means: JSON.parse(JSON.stringify(freqBins))}},
@@ -421,7 +422,7 @@ export class EegAtlas {
 	}
 
 	addToAtlas(tag,x,y,z){
-		this.atlas.map.push({ tag: tag, data: this.newAtlasData(x,y,z) });
+		this.fftMap.map.push({ tag: tag, data: this.newAtlasData(x,y,z) });
 	}
 
 	genCoherenceMap(channelTags = this.channelTags) {
@@ -502,9 +503,119 @@ export class EegAtlas {
 		return {scp: scpFreqs, delta: deltaFreqs, theta: thetaFreqs, alpha1: alpha1Freqs, alpha2: alpha2Freqs, beta: betaFreqs, lowgamma: lowgammaFreqs, highgamma: highgammaFreqs}
 	}
 
+	mapFFTData = (data, lastPostTime, channel, tag) => {
+		let atlasCoord = this.fftMap.map.find((o, i) => {
+		if(o.tag === tag){
+			this.fftMap.map[i].data.times.push(lastPostTime);
+			this.atlas.map[i].data.amplitudes.push(data[channel]);
+			if(this.fftMap.shared.bandFreqs.scp[1].length > 0){
+			var scp = data[channel].slice( this.fftMap.shared.bandFreqs.scp[1][0], this.fftMap.shared.bandFreqs.scp[1][this.fftMap.shared.bandFreqs.scp[1].length-1]+1);
+			this.fftMap.map[i].data.slices.scp.push(scp);
+			this.fftMap.map[i].data.means.scp.push(eegmath.mean(scp));
+			}
+			if(this.fftMap.shared.bandFreqs.scp[1].length > 0){
+			var delta = data[channel].slice( this.fftMap.shared.bandFreqs.delta[1][0], this.fftMap.shared.bandFreqs.delta[1][this.fftMap.shared.bandFreqs.delta[1].length-1]+1);
+			this.fftMap.map[i].data.slices.delta.push(delta);
+			this.fftMap.map[i].data.means.delta.push(eegmath.mean(delta));
+			}
+			if(this.fftMap.shared.bandFreqs.theta[1].length > 0){
+			var theta = data[channel].slice( this.fftMap.shared.bandFreqs.theta[1][0], this.fftMap.shared.bandFreqs.theta[1][this.fftMap.shared.bandFreqs.theta[1].length-1]+1);
+			this.fftMap.map[i].data.slices.theta.push(theta);
+			this.fftMap.map[i].data.means.theta.push(eegmath.mean(theta));
+			}
+			if(this.fftMap.shared.bandFreqs.alpha1[1].length > 0){
+			var alpha1 = data[channel].slice( this.fftMap.shared.bandFreqs.alpha1[1][0], this.fftMap.shared.bandFreqs.alpha1[1][this.fftMap.shared.bandFreqs.alpha1[1].length-1]+1);
+			this.fftMap.map[i].data.slices.alpha1.push(alpha1);
+			this.fftMap.map[i].data.means.alpha1.push(eegmath.mean(alpha1));
+			}
+			if(this.fftMap.shared.bandFreqs.alpha2[1].length > 0){
+			var alpha2 = data[channel].slice( this.fftMap.shared.bandFreqs.alpha2[1][0], this.fftMap.shared.bandFreqs.alpha2[1][this.fftMap.shared.bandFreqs.alpha2[1].length-1]+1);
+			this.fftMap.map[i].data.slices.alpha2.push(alpha2);
+			this.fftMap.map[i].data.means.alpha2.push(eegmath.mean(alpha2));
+			}
+			if(this.fftMap.shared.bandFreqs.beta[1].length > 0){
+			var beta  = data[channel].slice( this.fftMap.shared.bandFreqs.beta[1][0],  this.fftMap.shared.bandFreqs.beta[1][this.fftMap.shared.bandFreqs.beta[1].length-1]+1);
+			this.fftMap.map[i].data.slices.beta.push(beta);
+			this.fftMap.map[i].data.means.beta.push(eegmath.mean(beta));
+			}
+			if(this.fftMap.shared.bandFreqs.lowgamma[1].length > 0){
+			var lowgamma = data[channel].slice( this.fftMap.shared.bandFreqs.lowgamma[1][0], this.fftMap.shared.bandFreqs.lowgamma[1][this.fftMap.shared.bandFreqs.lowgamma[1].length-1]+1);
+			this.fftMap.map[i].data.slices.lowgamma.push(lowgamma);
+			this.fftMap.map[i].data.means.lowgamma.push(eegmath.mean(lowgamma));
+			}
+			if(this.fftMap.shared.bandFreqs.highgamma[1].length > 0){
+			var highgamma = data[channel].slice( this.fftMap.shared.bandFreqs.highgamma[1][0], this.fftMap.shared.bandFreqs.highgamma[1][this.fftMap.shared.bandFreqs.highgamma[1].length-1]+1);
+			this.fftMap.map[i].data.slices.highgamma.push(highgamma);
+			this.fftMap.map[i].data.means.highgamma.push(eegmath.mean(highgamma));
+			}
+			//console.timeEnd("slicing bands");
+			return true;
+		}
+		});
+	}
+
+	mapCoherenceData = (data, lastPostTime) => {
+		data.forEach((row,i) => {
+		  this.coherenceMap.map[i].data.amplitudes.push(row);
+		  this.coherenceMap.map[i].data.times.push(lastPostTime);
+	  
+		if(this.coherenceMap.shared.bandFreqs.scp[1].length > 0){
+		  var scp = row.slice( this.coherenceMap.shared.bandFreqs.scp[1][0], this.coherenceMap.shared.bandFreqs.scp[1][this.coherenceMap.shared.bandFreqs.scp[1].length-1]+1);
+		  this.coherenceMap.map[i].data.slices.scp.push(scp);
+		  this.coherenceMap.map[i].data.means.scp.push(eegmath.mean(scp));
+		}
+		if(this.coherenceMap.shared.bandFreqs.delta[1].length > 0){
+		  var delta = row.slice( this.coherenceMap.shared.bandFreqs.delta[1][0], this.coherenceMap.shared.bandFreqs.delta[1][this.coherenceMap.shared.bandFreqs.delta[1].length-1]+1);
+		  this.coherenceMap.map[i].data.slices.delta.push(delta);
+		  this.coherenceMap.map[i].data.means.delta.push(eegmath.mean(delta));
+		}
+		if(this.coherenceMap.shared.bandFreqs.theta[1].length > 0){
+		  var theta = row.slice( this.coherenceMap.shared.bandFreqs.theta[1][0], this.coherenceMap.shared.bandFreqs.theta[1][this.coherenceMap.shared.bandFreqs.theta[1].length-1]+1);
+		  this.coherenceMap.map[i].data.slices.theta.push(theta);
+		  this.coherenceMap.map[i].data.means.theta.push(eegmath.mean(theta));
+		}
+		if(this.coherenceMap.shared.bandFreqs.alpha1[1].length > 0){
+		  var alpha1 = row.slice( this.coherenceMap.shared.bandFreqs.alpha1[1][0], this.coherenceMap.shared.bandFreqs.alpha1[1][this.coherenceMap.shared.bandFreqs.alpha1[1].length-1]+1);
+		  this.coherenceMap.map[i].data.slices.alpha1.push(alpha1);
+		  this.coherenceMap.map[i].data.means.alpha1.push(eegmath.mean(alpha1));
+		}
+		if(this.coherenceMap.shared.bandFreqs.alpha2[1].length > 0){
+		  var alpha2 = row.slice( this.coherenceMap.shared.bandFreqs.alpha2[1][0], this.coherenceMap.shared.bandFreqs.alpha2[1][this.coherenceMap.shared.bandFreqs.alpha2[1].length-1]+1);
+		  this.coherenceMap.map[i].data.slices.alpha2.push(alpha2);
+		  this.coherenceMap.map[i].data.means.alpha2.push(eegmath.mean(alpha2));
+		}
+		if(this.coherenceMap.shared.bandFreqs.beta[1].length > 0){
+		  var beta  = row.slice( this.coherenceMap.shared.bandFreqs.beta[1][0],  this.coherenceMap.shared.bandFreqs.beta[1][this.coherenceMap.shared.bandFreqs.beta[1].length-1]+1);
+		  this.coherenceMap.map[i].data.slices.beta.push(beta);
+		  this.coherenceMap.map[i].data.means.beta.push(eegmath.mean(beta));
+		}
+		if(this.coherenceMap.shared.bandFreqs.lowgamma[1].length > 0){
+		  var lowgamma = row.slice( this.coherenceMap.shared.bandFreqs.lowgamma[1][0], this.coherenceMap.shared.bandFreqs.lowgamma[1][this.coherenceMap.shared.bandFreqs.lowgamma[1].length-1]+1);
+		  this.coherenceMap.map[i].data.slices.lowgamma.push(lowgamma);
+		  this.coherenceMap.map[i].data.means.lowgamma.push(eegmath.mean(lowgamma));
+		}
+		if(this.coherenceMap.shared.bandFreqs.highgamma[1].length > 0){
+		  var highgamma = row.slice( this.coherenceMap.shared.bandFreqs.highgamma[1][0], this.coherenceMap.shared.bandFreqs.highgamma[1][this.coherenceMap.shared.bandFreqs.highgamma[1].length-1]+1);
+		  this.coherenceMap.map[i].data.slices.highgamma.push(highgamma);
+		  this.coherenceMap.map[i].data.means.highgamma.push(eegmath.mean(highgamma));
+		}
+		});
+	  }
+
+	//Returns the x axis (frequencies) for the bandpass filter amplitudes
+	bandPassWindow(freqStart,freqEnd,sampleRate) {
+ 
+		var freqEnd_nyquist = freqEnd*2;
+		var fftwindow = [];
+		  for (var i = 0; i < Math.ceil(0.5*sampleRate); i++){
+			  fftwindow.push(freqStart + (freqEnd_nyquist-freqStart)*i/(sampleRate));
+		  }
+		return fftwindow;
+	  }
+
 }
 
-export class EegMath {
+export class eegmath {
 	constructor() {
 
 	}
