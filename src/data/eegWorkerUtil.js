@@ -1,5 +1,3 @@
-import { store } from './store';
-
 export class WorkerUtil {
 
     constructor(nThreads=1, workerSrc = './js/eegworker.js', onReceivedMsg = null) {
