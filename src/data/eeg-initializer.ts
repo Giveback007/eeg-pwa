@@ -1,6 +1,6 @@
 import { eeg32, eegAtlas } from './eeg32'
 import { store } from './store';
-import { eegWorkerUtil } from './eegWorkerUtil'
+import { WorkerUtil } from './eegWorkerUtil'
 
 export type Channel = {
     ch: number;
@@ -8,35 +8,84 @@ export type Channel = {
     name: string;
 }
 
-export const atlas = new eegAtlas();
-export const eegConnection = new eeg32(() => {
-    store.setEegData(eegConnection.data); // Throttled updating
-}); //onDecoded callback to set state on front end.
-export const workers = new eegWorkerUtil(2);
-
-let bandPassWindow = atlas.bandPassWindow(0,100,eegConnection.sps)
-
-atlas.channelTags = [
+var defaultTags = [
     {ch: 4, tag: "T3", viewing: true},
     {ch: 24, tag: "T4", viewing: true}
 ];
-  
+
+export const atlas = new eegAtlas(defaultTags);
+export const eegConnection = new eeg32(() => {
+    store.setEegData(eegConnection.data); // Throttled updating
+}); //onDecoded callback to set state on front end.
+
+var receivedMsg = (msg: any) => {
+    if(msg.foo === "coherence") {
+        var fftData = [...msg.output[1]];
+        var coherenceData = [...msg.output[2]];
+        store.setState({
+            ["posFFTList"]:fftData,
+            ["coherenceResults"]:coherenceData
+        });
+
+        var lastPostTime = store.getState().lastPostTime; //
+
+        eegConnection.channelTags.forEach((row: any,i: any) => {
+            if((row.tag !== null) && (i < eegConnection.nChannels)){
+                //console.log(tag);
+                atlas.mapFFTData(fftData, lastPostTime, i, row.tag);
+            }
+        });
+
+        atlas.mapCoherenceData(coherenceData, lastPostTime)
+    }
+}
+
+export const workers = new WorkerUtil(2,'./js/eegworker.js',(msg) => {receivedMsg(msg)}); //not sure I am passing this correctly
+
+let bandPassWindow = atlas.bandPassWindow(0,100,eegConnection.sps)
+
+
+
 atlas.fftMap = atlas.makeAtlas10_20();
 atlas.coherenceMap = atlas.genCoherenceMap(atlas.channelTags);
 atlas.fftMap.shared.bandPassWindow = bandPassWindow;
 atlas.fftMap.shared.bandFreqs = atlas.getBandFreqs(bandPassWindow);
 atlas.coherenceMap.shared.bandPassWindow = bandPassWindow;
 atlas.coherenceMap.shared.bandFreqs = atlas.fftMap.shared.bandFreqs;
-  
 
 
-store.stateSub((s) => {
+
+store.stateSub('newMsg', (s) => {
     //if newMsg === true and new EEG data comes through:  fire off another message to the workers, use newMsg to make sure workers are not overwhelmed if running slower than setEegData
-    //on posFFTList update: atlas.mapFFTData(s.posFFTList,s.lastPostTime)
-    //on coherenceResults update: atlas.mapCoherenceData(s.coherenceResults)
-    //on bandpass bounds change: updateBandPass(freqStart,freqEnd)
+    if(s.newMsg === true) {
+        store.setState({["newMsg"]: false});
+        store.setState({["lastPostTime"]: eegConnection.data.ms[eegConnection.data.ms.length-1]});
+        workers.postToWorker('coherence',[bufferData(), s.nSec, s.freqStart, s.freqEnd, eegConnection.scalar]);
+    }
 });
 
+store.stateSub('posFFTList', (s) => {
+    //on posFFTList update: atlas.mapFFTData(s.posFFTList,s.lastPostTime)
+});
+
+store.stateSub('coherenceResults', (s) => {
+    //on coherenceResults update: atlas.mapCoherenceData(s.coherenceResults)
+});
+
+//Sub action for setting the bandpass filter to update the bandpass
+
+function bufferData() {
+    var buffer = [];
+    for(var i = 0; i < atlas.channelTags.length; i++){
+        if(i < eegConnection.nChannels) {
+            var channel = "A"+atlas.channelTags[i].ch;
+            var dat = eegConnection.data[channel].slice(eegConnection.data.counter - eegConnection.sps, eegConnection.data.counter);
+            buffer.push(dat);
+        }
+    }
+    return buffer;
+
+}
 
 function updateBandPass(freqStart, freqEnd) {
 
@@ -56,7 +105,7 @@ function updateBandPass(freqStart, freqEnd) {
     atlas.fftMap.shared.bandFreqs = atlas.getBandFreqs(bandPassWindow); //Update bands accessed by the atlas for averaging
 
     if(store.getState("fdbackmode") === "coherence") {
-        atlas.coherenceMap = atlas.genCoherenceMap(EEG.channelTags);
+        atlas.coherenceMap = atlas.genCoherenceMap(atlas.channelTags);
         atlas.coherenceMap.bandPasswindow = bandPassWindow;
         atlas.coherenceMap.shared.bandFreqs = atlas.fftMap.shared.bandFreqs;
     }

@@ -25,38 +25,34 @@ function genAppletHTML(containerId, visualId, width, height) {
 }
 
 
-export class SmoothieApplet extends Applet {
+export class SmoothieApplet extends Applet<S,M> {
 
-    mode: "Smoothie"
+    mode = "Smoothie";
 
-    class: null | object
-    width: number | string
-    height: number | string
-    parentNode: HTMLElement
-    node: HTMLElement
-    storeSub: any
+    class: null | object = null;
+    width: number | string;
+    height: number | string;
+    parentNode: HTMLElement;
+    node: HTMLElement;
+    storeSub: any;
 
     constructor(props, state) {
-        super(props, {});
+        super(props, (s) => {});
 
         this.parentNode = props.parentNode;
         this.width = props.width;
         this.height = props.height;
-        
-        //set parentNode
-        this.storeSub = store.stateSub((s) => {
-            // change these on global change
-            // on posFFTList change: onUpdate()
 
-
+        store.stateSub('posFFTList', (s) => {
+          this.onUpdate();
         });
 
         let id = "applet" + Math.floor(Math.random()*100000);
-        
+
         htmlrender(genAppletHTML(id,id+"canvas",this.width,this.height),this.parentNode);
         this.node = document.getElementById(id);
-    
-        this.init(props, state);
+
+        this.init();
 
     }
 
@@ -76,7 +72,7 @@ export class SmoothieApplet extends Applet {
             atlas.channelTags.forEach((row,i) => {
                 var coord = {};
                 coord = atlas.getAtlasCoordByTag(row.tag);
-    
+
                 if(i < this.class.series.length - 1){
                     this.class.series[i].append(Date.now(), Math.max(...coord.data.slices.alpha1[coord.data.slices.alpha1.length-1]));
                 }
@@ -111,10 +107,10 @@ export class SmoothieApplet extends Applet {
                 }
             });
         }
-          
+
     }
 
-    init(props,state) {
+    init() {
 
         addChannelOptions(this.node.id+"canvas"+"channel")
 
@@ -146,7 +142,7 @@ function addChannelOptions(selectId) {
     });
     select.innerHTML = opts;
   }
-  
+
   function addCoherenceOptions(selectId) {
     var select = document.getElementById(selectId);
     select.innerHTML = "";

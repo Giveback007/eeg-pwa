@@ -1,9 +1,10 @@
 import { store } from './store';
 
-export class eegWorkerUtil {
+export class WorkerUtil {
 
-    constructor(nThreads=1) {
+    constructor(nThreads=1, workerSrc = './js/eegworker.js', onReceivedMsg = null) {
 
+        if(receivedMsg !== null) { this.onReceivedMsg = onReceivedMsg; }
         this.workers;
         this.threads = nThreads;
         this.threadRotation = 0;
@@ -11,15 +12,15 @@ export class eegWorkerUtil {
         try {
             this.workers = [];
                 for(var i = 0; i < this.threads; i++){
-                    this.workers.push(new Worker('./js/eegworker.js'));
+                    this.workers.push(new Worker(workerSrc));
                     this.workers[i].onmessage = (e) => {
                         var msg = e.data; //Returned string
                         //console.log(msg)
-                        this.receivedMsg(msg);
+                        this.onReceivedMsg(msg);
                     };
                 }
                 console.log("worker threads: ", this.threads)
-            
+
             }
         catch (err) {
             this.workers = undefined;
@@ -44,30 +45,8 @@ export class eegWorkerUtil {
     }
 
     //Callback when message data is received, expects eegworker.js formatted stuff
-    receivedMsg = (msg) => {
-        if(msg.foo === "multidftbandpass") {
-          //console.log(msg)
-          session.posFFTList = [...msg.output[1]];
-          //session.posFFTList.forEach((row,i) => {
-          //  row.map( x => x * session.stepsPeruV);
-          //});
-      
-          //processFFTs();
-          
-        }
-        if(msg.foo === "coherence") {
-          
-          store.setState({ [posFFTList]: [...msg.output[1]] });
-          store.setState({ [coherenceResults]: [...msg.output[2]] });
-
-          //session.posFFTList.forEach((row,i) => {
-          //  row.map( x => x * session.stepsPeruV);
-          //}); s
-          //processFFTs();
-          //mapCoherenceData();
-        }
-        store.setState({ [newMsg]: true })
-        session.newMsg = true;
-      }
+    onReceivedMsg = (msg) => {
+        console.log(msg);
+    }
 }
 

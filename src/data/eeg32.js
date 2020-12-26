@@ -554,11 +554,11 @@ export class eegAtlas {
 		});
 	}
 
-	mapCoherenceData = (data, lastPostTime) => {
+	mapCoherenceData = (data, lastPostTime) => { //Expects data in correct order
 		data.forEach((row,i) => {
 		  this.coherenceMap.map[i].data.amplitudes.push(row);
 		  this.coherenceMap.map[i].data.times.push(lastPostTime);
-	  
+
 		if(this.coherenceMap.shared.bandFreqs.scp[1].length > 0){
 		  var scp = row.slice( this.coherenceMap.shared.bandFreqs.scp[1][0], this.coherenceMap.shared.bandFreqs.scp[1][this.coherenceMap.shared.bandFreqs.scp[1].length-1]+1);
 		  this.coherenceMap.map[i].data.slices.scp.push(scp);
@@ -604,7 +604,7 @@ export class eegAtlas {
 
 	//Returns the x axis (frequencies) for the bandpass filter amplitudes
 	bandPassWindow(freqStart,freqEnd,sampleRate) {
- 
+
 		var freqEnd_nyquist = freqEnd*2;
 		var fftwindow = [];
 		  for (var i = 0; i < Math.ceil(0.5*sampleRate); i++){
