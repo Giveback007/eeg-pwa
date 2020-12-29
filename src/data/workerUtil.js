@@ -27,10 +27,10 @@ export class WorkerUtil {
         }
     }
 
-    //Sends info to eegworker.js threads for execution based on defined function "foo"
-    postToWorker = (foo,input,workeridx = null) => {
+    //Sends info to worker threads for execution based on defined function "foo"
+    postToWorker = (input,workeridx = null) => {
         if(workeridx === null) {
-            this.workers[this.threadRotation].postMessage({foo:foo, input:input});
+            this.workers[this.threadRotation].postMessage(input);
             if(this.threads > 1){
                 this.threadRotation++;
                 if(this.threadRotation >= this.threads){
@@ -39,7 +39,7 @@ export class WorkerUtil {
             }
         }
         else{
-            this.workers[workeridx].postMessage({foo:foo, input:input});
+            this.workers[workeridx].postMessage(input);
         }
     }
 

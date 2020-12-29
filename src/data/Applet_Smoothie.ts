@@ -5,7 +5,6 @@ import { html, render as htmlrender } from 'lit-html';
 import { store } from './store';
 import { Applet } from 'src/components/Applet/Applet';
 
-
 function genAppletHTML(containerId, visualId, width, height) {
     return html`
     <div id='${containerId}' width='${width}' height='${height}'>
@@ -43,7 +42,7 @@ export class SmoothieApplet extends Applet<S,M> {
         this.width = props.width;
         this.height = props.height;
 
-        store.stateSub('posFFTList', (s) => {
+        store.actionSub("WORKER_DONE", (s, prev) => {
           this.onUpdate();
         });
 

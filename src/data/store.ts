@@ -42,7 +42,7 @@ const initState: State = {
     navRightLinks,
 
     data: [],
-    lastVal: {},
+    lastVal: { },
     basicExampleChannels: ['T2', 'T4'],
 
     nSec: 1, // Number of seconds of FFT data to process
@@ -59,7 +59,8 @@ const initState: State = {
 
 }
 
-class AppStateManager extends StateManager<State> {
+
+class AppStateManager extends StateManager<State, Actions> {
 
     constructor() {
         super(initState);
@@ -104,8 +105,13 @@ export const browserHist = createBrowserHistory();
 export const store = new AppStateManager();
 export const linker = stateManagerReactLinker(store);
 
-store.actionSub(true, async (a) => {
+
+store.actionSub([], async (a) => {
     switch (a.type) {
+        case "WORKER_DONE": {
+
+          break;
+        }
         case "EEG_CONNECT": {
             store.changeNavBtn('left', 0, { ...eegDisconnectNavBtn, loading: true });
             await eegConnection.setupSerialAsync();
@@ -120,10 +126,12 @@ store.actionSub(true, async (a) => {
             store.changeNavBtn('left', 0, eegConnectNavBtn);
             break;
         }
-        case "TAG_SET": {
-            const { data } = a;
-            // data = '1' | '2'
-            break;
+        case "SET_TAGS": {
+
+          break;
+        }
+        case "SET_BANDPASS": {
+          break;
         }
     }
 });

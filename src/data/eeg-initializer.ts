@@ -1,6 +1,6 @@
 import { eeg32, eegAtlas } from './eeg32'
 import { store } from './store';
-import { WorkerUtil } from './eegWorkerUtil'
+import { WorkerUtil } from './workerUtil'
 
 export type Channel = {
     ch: number;
@@ -36,11 +36,14 @@ var receivedMsg = (msg: any) => {
             }
         });
 
-        atlas.mapCoherenceData(coherenceData, lastPostTime)
+        atlas.mapCoherenceData(coherenceData, lastPostTime);
+
+
+        store.action('WORKER_DONE');
     }
 }
 
-export const workers = new WorkerUtil(2,'./js/eegworker.js',(msg) => {receivedMsg(msg)}); //not sure I am passing this correctly
+export const workers = new WorkerUtil(2,'./js/eegworker.js',(msg: any) => {receivedMsg(msg)}); //not sure I am passing this correctly
 
 let bandPassWindow = atlas.bandPassWindow(0,100,eegConnection.sps)
 
@@ -54,13 +57,11 @@ atlas.coherenceMap.shared.bandPassWindow = bandPassWindow;
 atlas.coherenceMap.shared.bandFreqs = atlas.fftMap.shared.bandFreqs;
 
 
-
-store.stateSub('newMsg', (s) => {
-    //if newMsg === true and new EEG data comes through:  fire off another message to the workers, use newMsg to make sure workers are not overwhelmed if running slower than setEegData
-    if(s.newMsg === true) {
-        store.setState({["newMsg"]: false});
-        store.setState({["lastPostTime"]: eegConnection.data.ms[eegConnection.data.ms.length-1]});
-        workers.postToWorker('coherence',[bufferData(), s.nSec, s.freqStart, s.freqEnd, eegConnection.scalar]);
+store.actionSub('WORKER_DONE', (a) => {
+    var s = store.getState();
+    store.setState({["lastPostTime"]: eegConnection.data.ms[eegConnection.data.ms.length-1]});
+    if(s.fdBackMode === 'coherence') {
+        workers.postToWorker({foo:'coherence', input:[bufferData(), s.nSec, s.freqStart, s.freqEnd, eegConnection.scalar]});
     }
 });
 
@@ -73,6 +74,9 @@ store.stateSub('coherenceResults', (s) => {
 });
 
 //Sub action for setting the bandpass filter to update the bandpass
+store.actionSub('SET_BANDPASS', (a) => {
+
+});
 
 function bufferData() {
     var buffer = [];
@@ -104,7 +108,7 @@ function updateBandPass(freqStart, freqEnd) {
     atlas.fftMap.shared.bandPassWindow = bandPassWindow;//Push the x-axis values for each frame captured as they may change - should make this lighter
     atlas.fftMap.shared.bandFreqs = atlas.getBandFreqs(bandPassWindow); //Update bands accessed by the atlas for averaging
 
-    if(store.getState("fdbackmode") === "coherence") {
+    if(store.getState().fdBackMode === "coherence") {
         atlas.coherenceMap = atlas.genCoherenceMap(atlas.channelTags);
         atlas.coherenceMap.bandPasswindow = bandPassWindow;
         atlas.coherenceMap.shared.bandFreqs = atlas.fftMap.shared.bandFreqs;

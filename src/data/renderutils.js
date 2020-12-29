@@ -594,6 +594,19 @@ export class Physics {
     }
 
     timeStep(dt) { //dt in seconds
+
+        /* //Nearest neighbor search optimization for collision detection (to cut down array searching), can make this only fire every n-milliseconds for speed
+        var neighborNodes = Math3D.nearestNeighborSearch(positions,this.globalSettings.maxDistCheck);
+        neighborNodes.forEach((node,i) => {
+            var body1 = this.physicsBodies[i];
+            node.neighbors.forEach((neighbor,j) => {
+                var body2 = this.physicsBodies[j];
+                var isColliding = this.collisionCheck(body,otherBody);
+                if(isColliding === true) { resolveCollision(body,otherBody); }
+            });
+        });         
+        */
+
         this.physicsBodies.forEach((body,i) => {
 
             //var positions = new Array(this.physicsBodies.length);
@@ -606,18 +619,6 @@ export class Physics {
                     this.resolveCollision(otherBody,body); //Now calculate forces
                 }
             }
-
-            /* //Nearest neighbor search optimization for collision detection (to cut down array searching)
-            var neighborNodes = Math3D.nearestNeighborSearch(positions,this.globalSettings.maxDistCheck);
-            neighborNodes.forEach((node,i) => {
-                var body1 = this.physicsBodies[i];
-                node.neighbors.forEach((neighbor,j) => {
-                    var body2 = this.physicsBodies[j];
-                    var isColliding = this.collisionCheck(body,otherBody);
-                    if(isColliding === true) { resolveCollision(body,otherBody); }
-                });
-            });         
-            */
 
             //Resolve Attractors
 
