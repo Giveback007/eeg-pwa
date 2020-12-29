@@ -564,7 +564,7 @@ export class Physics {
             collisionEnabled: true,
             collisionType: "Sphere", //Sphere, Box, Point
             collisionRadius: 1, //Radius of sphere or nearest point on side planes in a box
-            collisionBoundsScale: [1,1,1], //Can distort the bounding box
+            collisionBoundsScale: [1,1,1], //Can distort the bounding box, doesn't affect the sphere yet.
 
             dynamic: true,
             
@@ -758,9 +758,9 @@ export class Physics {
     }
 
     //Collision between two spheres
-    sphericalCollisionCheck(body1Idx,body2Idx) {
-        let body1 = this.physicsBodies[body1Idx];
-        let body2 = this.physicsBodies[body2Idx];
+    sphericalCollisionCheck(sphere1Idx,sphere2Idx) {
+        let body1 = this.physicsBodies[sphere1Idx];
+        let body2 = this.physicsBodies[sphere2Idx];
 
         let dist = Math3D.distance(body1.position,body2.position);
 
@@ -768,9 +768,9 @@ export class Physics {
     }
 
     //Check if point is inside the box volume
-    isPointInsideBox(point,bodyIdx) {
+    isPointInsideBox(point,boxIdx) {
         
-        let body1 = this.physicsBodies[bodyIdx];
+        let body1 = this.physicsBodies[boxIdx];
         //should precompute these for speed with Box objects as reference
         let body1minX = (body1.position[0]-body1.collisionRadius)*body1.collisionBoundsScale[0];
         let body1maxX = (body1.position[0]+body1.collisionRadius)*body1.collisionBoundsScale[0];
@@ -786,10 +786,10 @@ export class Physics {
     }
 
     //Collision between two axis-aligned boxes. TODO: account for rotation with simple trig modifiers
-    boxCollisionCheck(body1idx,body2idx) {
+    boxCollisionCheck(box1idx,box2idx) {
 
-        let body1 = this.physicsBodies[body1idx];
-        let body2 = this.physicsBodies[body2idx];
+        let body1 = this.physicsBodies[box1idx];
+        let body2 = this.physicsBodies[box2idx];
 
         let body1minX = (body1.position[0]-body1.collisionRadius)*body1.collisionBoundsScale[0];
         let body1maxX = (body1.position[0]+body1.collisionRadius)*body1.collisionBoundsScale[0];
@@ -823,14 +823,16 @@ export class Physics {
         let boxMinZ = (box.position[2]-box.collisionRadius)*box.collisionBoundsScale[2];
         let boxMaxZ = (box.position[2]+box.collisionRadius)*box.collisionBoundsScale[2];
 
+        //let direction = Math.makeVec(sphere.position,box.position);
+
         //Get closest point to sphere center
         let clamp = [
-            Math.max(box.position[0], Math.min(sphere.position[0], boxMaxX)),
-            Math.max(box.position[1], Math.min(sphere.position[1], boxMaxY)),
-            Math.max(box.position[2], Math.min(sphere.position[2], boxMaxZ))
+            Math.max(boxMinX, Math.min(sphere.position[0], boxMaxX)),
+            Math.max(boxMinY, Math.min(sphere.position[1], boxMaxY)),
+            Math.max(boxMinZ, Math.min(sphere.position[2], boxMaxZ))
         ];
 
-        let dist = Math3D.distance(clamp,sphere.position);
+        let dist = Math3D.distance(sphere.position,clamp);
 
         return dist > sphere.collisionRadius;
 
