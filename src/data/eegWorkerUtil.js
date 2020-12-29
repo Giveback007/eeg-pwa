@@ -1,8 +1,9 @@
 export class WorkerUtil {
 
-    constructor(nThreads=1, workerSrc = './js/eegworker.js', onReceivedMsg = null) {
+    constructor(nThreads=1, workerSrc = './js/eegworker.js', onReceivedMsg = this.onReceivedMsg) {
+        // this.onReceivedMsg = onReceivedMsg || this.onReceivedMsg
 
-        if(receivedMsg !== null) { this.onReceivedMsg = onReceivedMsg; }
+        // if(!receivedMsg) { this.onReceivedMsg = onReceivedMsg; }
         this.workers;
         this.threads = nThreads;
         this.threadRotation = 0;
