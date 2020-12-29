@@ -1,6 +1,6 @@
 //Utilities for CPU-side render prep. Contains graphnodes and projection matrices. For super optimal matrix math use glMatrix (https://github.com/toji/gl-matrix)
 
-export class graphNode { //Use this to organize 3D models hierarchically if needed 
+export class graphNode { //Use this to organize 3D models hierarchically if needed
     constructor(parent=null, children=[null], id=null) {
         this.id = id;
         this.parent = parent; //Access/inherit parent object
@@ -14,7 +14,7 @@ export class graphNode { //Use this to organize 3D models hierarchically if need
         //3D Rendering stuff
         this.model = null; //
         this.mesh = [[0,0,0],[1,1,1],[1,0,0],[0,0,0]]; // Model vertex list, array of vec3's xyz, so push x,y,z components. For ThreeJS use THREE.Mesh(vertices, material) to generate a model from this list with the selected material
-        this.colors = [[0,0,0],[255,255,255],[255,0,0],[0,0,0]]; // Vertex color list, array of vec3's rgb or vec4's rgba for outside of ThreeJS. For ThreeJS use THREE.Color("rgb(r,g,b)") for each array item. 
+        this.colors = [[0,0,0],[255,255,255],[255,0,0],[0,0,0]]; // Vertex color list, array of vec3's rgb or vec4's rgba for outside of ThreeJS. For ThreeJS use THREE.Color("rgb(r,g,b)") for each array item.
         this.materials = []; // Array of materials maps i.e. lighting properties and texture maps.
         this.textures = []; // Array of texture image files.
 
@@ -23,7 +23,7 @@ export class graphNode { //Use this to organize 3D models hierarchically if need
         }
     }
 
-    inherit(parent) { //Sets globals to be equal to parent info and adds parent functions to this node. 
+    inherit(parent) { //Sets globals to be equal to parent info and adds parent functions to this node.
         this.parent = parent;
         this.globalPos = parent.globalPos;
         this.globalRot = parent.globalRot;
@@ -87,7 +87,7 @@ export class matrix2D { //some functions for 2d matrix work
     static transpose2D(mat2D){
 		return mat2D[0].map((_, colIndex) => mat2.map(row => row[colIndex]));
     }
-    
+
     static mul(a, b) { //Multiply two 2D matrices (array of arrays)
 		var aNumRows = a.length, aNumCols = a[0].length,
 			bNumRows = b.length, bNumCols = b[0].length,
@@ -103,7 +103,7 @@ export class matrix2D { //some functions for 2d matrix work
 		}
 		return m;
     }
-      
+
 }
 
 export class Math3D { //some stuff for doing math in 3D
@@ -141,7 +141,7 @@ export class Math3D { //some stuff for doing math in 3D
     static makeVec(point1,point2) {
         return [point2[0]-point1[0],point2[1]-point1[1],point2[2]-point1[2]];
     }
-    
+
     //Find normal to a plane define by points (v(1to2) cross v(1to3)), can set to return the reverse normal (v(1to3) cross v(1to2))
     static calcNormal(point1,point2,point3,pos=true) {
         var QR = makeVec(point1,point2);
@@ -165,32 +165,32 @@ export class Math3D { //some stuff for doing math in 3D
     static rotateMesh(mesh, pitch, roll, yaw) {
         var cosa = Math.cos(yaw);
         var sina = Math.sin(yaw);
-    
+
         var cosb = Math.cos(pitch);
         var sinb = Math.sin(pitch);
-    
+
         var cosc = Math.cos(roll);
         var sinc = Math.sin(roll);
-    
+
         var Axx = cosa*cosb;
         var Axy = cosa*sinb*sinc - sina*cosc;
         var Axz = cosa*sinb*cosc + sina*sinc;
-    
+
         var Ayx = sina*cosb;
         var Ayy = sina*sinb*sinc + cosa*cosc;
         var Ayz = sina*sinb*cosc - cosa*sinc;
-    
+
         var Azx = -sinb;
         var Azy = cosb*sinc;
         var Azz = cosb*cosc;
 
         var result = [...mesh];
-    
+
         for (var i = 0; i < mesh.length; i++) {
             var px = mesh[i][0];
             var py = mesh[i][1];
             var pz = mesh[i][2];
-    
+
             result[i][0] = Axx*px + Axy*py + Axz*pz;
             result[i][1] = Ayx*px + Ayy*py + Ayz*pz;
             result[i][2] = Azx*px + Azy*py + Azz*pz;
@@ -216,10 +216,10 @@ export class Math3D { //some stuff for doing math in 3D
             [tx, ty, tz, 1]
         ];
     }
-    
+
     translateM4(mat4, tx, ty, tz) {
         var translate = this.makeTranslationM4(tx,ty,tz)
-        
+
         return matrix2D.mul(mat4, translate);
     }
 
@@ -242,7 +242,7 @@ export class Math3D { //some stuff for doing math in 3D
     xRotationM4(angleInRadians) {
         var c = Math.cos(angleInRadians);
         var s = Math.sin(angleInRadians);
-    
+
         return [
           [1, 0, 0, 0],
           [0, c, s, 0],
@@ -250,11 +250,11 @@ export class Math3D { //some stuff for doing math in 3D
           [0, 0, 0, 1],
         ];
     }
-    
+
     yRotationM4(angleInRadians) {
         var c = Math.cos(angleInRadians);
         var s = Math.sin(angleInRadians);
-    
+
         return [
           [c, 0, -s, 0],
           [0, 1, 0, 0],
@@ -262,11 +262,11 @@ export class Math3D { //some stuff for doing math in 3D
           [0, 0, 0, 1]
         ];
     }
-    
+
     zRotationM4(angleInRadians) {
         var c = Math.cos(angleInRadians);
         var s = Math.sin(angleInRadians);
-    
+
         return [
            [c, s, 0, 0],
           [-s, c, 0, 0],
@@ -292,7 +292,7 @@ export class Math3D { //some stuff for doing math in 3D
     }
 
     rotatePoint1AboutPoint2(p1,p2,anglex,angley,anglez) {
-        let rotatedM4 = 
+        let rotatedM4 =
             matrix2D.mul(
                 this.translateM4(
                     this.rotateM4(
@@ -309,126 +309,126 @@ export class Math3D { //some stuff for doing math in 3D
     invertM4(mat4) {
         var m = mat4;
         var inv = [...mat4];
-        inv[0][0] = m[1][1]  * m[2][2]* m[3][3] - 
-                m[1][1]  * m[2][3]* m[3][2]- 
-                m[2][1] * m[1][2] * m[3][3] + 
+        inv[0][0] = m[1][1]  * m[2][2]* m[3][3] -
+                m[1][1]  * m[2][3]* m[3][2]-
+                m[2][1] * m[1][2] * m[3][3] +
                 m[2][1] * m[1][3]* m[3][2]+
-                m[3][1]* m[1][2] * m[2][3]- 
+                m[3][1]* m[1][2] * m[2][3]-
                 m[3][1]* m[1][3]* m[2][2];
 
-        inv[1][0] = -m[1][0] * m[2][2]* m[3][3] + 
-                m[1][0] * m[2][3]* m[3][2]+ 
-                m[2][0] * m[1][2] * m[3][3] - 
-                m[2][0] * m[1][3]* m[3][2]- 
-                m[3][0]* m[1][2] * m[2][3]+ 
+        inv[1][0] = -m[1][0] * m[2][2]* m[3][3] +
+                m[1][0] * m[2][3]* m[3][2]+
+                m[2][0] * m[1][2] * m[3][3] -
+                m[2][0] * m[1][3]* m[3][2]-
+                m[3][0]* m[1][2] * m[2][3]+
                 m[3][0]* m[1][3]* m[2][2];
 
-        inv[2][0] = m[1][0] * m[2][1]* m[3][3] - 
-                m[1][0] * m[2][3]* m[3][1]- 
-                m[2][0] * m[1][1] * m[3][3] + 
-                m[2][0] * m[1][3]* m[3][1]+ 
-                m[3][0]* m[1][1] * m[2][3]- 
+        inv[2][0] = m[1][0] * m[2][1]* m[3][3] -
+                m[1][0] * m[2][3]* m[3][1]-
+                m[2][0] * m[1][1] * m[3][3] +
+                m[2][0] * m[1][3]* m[3][1]+
+                m[3][0]* m[1][1] * m[2][3]-
                 m[3][0]* m[1][3]* m[2][1];
 
-        inv[3][0] = -m[1][0] * m[2][1]* m[3][2]+ 
+        inv[3][0] = -m[1][0] * m[2][1]* m[3][2]+
                 m[1][0] * m[2][2]* m[3][1]+
-                m[2][0] * m[1][1] * m[3][2]- 
-                m[2][0] * m[1][2]* m[3][1]- 
-                m[3][0]* m[1][1] * m[2][2]+ 
+                m[2][0] * m[1][1] * m[3][2]-
+                m[2][0] * m[1][2]* m[3][1]-
+                m[3][0]* m[1][1] * m[2][2]+
                 m[3][0]* m[1][2]* m[2][1];
 
-        inv[0][1] = -m[0][1] * m[2][2]* m[3][3] + 
-                m[0][1] * m[2][3]* m[3][2]+ 
-                m[2][1] * m[0][2]* m[3][3] - 
-                m[2][1] * m[0][3]* m[3][2]- 
-                m[3][1]* m[0][2]* m[2][3]+ 
+        inv[0][1] = -m[0][1] * m[2][2]* m[3][3] +
+                m[0][1] * m[2][3]* m[3][2]+
+                m[2][1] * m[0][2]* m[3][3] -
+                m[2][1] * m[0][3]* m[3][2]-
+                m[3][1]* m[0][2]* m[2][3]+
                 m[3][1]* m[0][3]* m[2][2];
 
-        inv[1][1] = m[0][0]  * m[2][2]* m[3][3] - 
-                m[0][0]  * m[2][3]* m[3][2]- 
-                m[2][0] * m[0][2]* m[3][3] + 
-                m[2][0] * m[0][3]* m[3][2]+ 
-                m[3][0]* m[0][2]* m[2][3]- 
+        inv[1][1] = m[0][0]  * m[2][2]* m[3][3] -
+                m[0][0]  * m[2][3]* m[3][2]-
+                m[2][0] * m[0][2]* m[3][3] +
+                m[2][0] * m[0][3]* m[3][2]+
+                m[3][0]* m[0][2]* m[2][3]-
                 m[3][0]* m[0][3]* m[2][2];
 
-        inv[2][1] = -m[0][0]  * m[2][1]* m[3][3] + 
-                m[0][0]  * m[2][3]* m[3][1]+ 
-                m[2][0] * m[0][1]* m[3][3] - 
-                m[2][0] * m[0][3]* m[3][1]- 
-                m[3][0]* m[0][1]* m[2][3]+ 
+        inv[2][1] = -m[0][0]  * m[2][1]* m[3][3] +
+                m[0][0]  * m[2][3]* m[3][1]+
+                m[2][0] * m[0][1]* m[3][3] -
+                m[2][0] * m[0][3]* m[3][1]-
+                m[3][0]* m[0][1]* m[2][3]+
                 m[3][0]* m[0][3]* m[2][1];
 
-        inv[3][1] = m[0][0]  * m[2][1]* m[3][2]- 
-                m[0][0]  * m[2][2]* m[3][1]- 
-                m[2][0] * m[0][1]* m[3][2]+ 
-                m[2][0] * m[0][2]* m[3][1]+ 
-                m[3][0]* m[0][1]* m[2][2]- 
+        inv[3][1] = m[0][0]  * m[2][1]* m[3][2]-
+                m[0][0]  * m[2][2]* m[3][1]-
+                m[2][0] * m[0][1]* m[3][2]+
+                m[2][0] * m[0][2]* m[3][1]+
+                m[3][0]* m[0][1]* m[2][2]-
                 m[3][0]* m[0][2]* m[2][1];
 
-        inv[0][2] = m[0][1] * m[1][2]* m[3][3] - 
-                m[0][1] * m[1][3]* m[3][2]- 
-                m[1][1]  * m[0][2]* m[3][3] + 
-                m[1][1]  * m[0][3]* m[3][2]+ 
-                m[3][1]* m[0][2]* m[1][3]- 
+        inv[0][2] = m[0][1] * m[1][2]* m[3][3] -
+                m[0][1] * m[1][3]* m[3][2]-
+                m[1][1]  * m[0][2]* m[3][3] +
+                m[1][1]  * m[0][3]* m[3][2]+
+                m[3][1]* m[0][2]* m[1][3]-
                 m[3][1]* m[0][3]* m[1][2];
 
-        inv[1][2] = -m[0][0]  * m[1][2]* m[3][3] + 
-                m[0][0]  * m[1][3]* m[3][2]+ 
-                m[1][0] * m[0][2]* m[3][3] - 
-                m[1][0] * m[0][3]* m[3][2]- 
-                m[3][0]* m[0][2]* m[1][3]+ 
+        inv[1][2] = -m[0][0]  * m[1][2]* m[3][3] +
+                m[0][0]  * m[1][3]* m[3][2]+
+                m[1][0] * m[0][2]* m[3][3] -
+                m[1][0] * m[0][3]* m[3][2]-
+                m[3][0]* m[0][2]* m[1][3]+
                 m[3][0]* m[0][3]* m[1][2];
 
-        inv[2][2] = m[0][0]  * m[1][1] * m[3][3] - 
-                m[0][0]  * m[1][3]* m[3][1]- 
-                m[1][0] * m[0][1]* m[3][3] + 
-                m[1][0] * m[0][3]* m[3][1]+ 
-                m[3][0]* m[0][1]* m[1][3]- 
+        inv[2][2] = m[0][0]  * m[1][1] * m[3][3] -
+                m[0][0]  * m[1][3]* m[3][1]-
+                m[1][0] * m[0][1]* m[3][3] +
+                m[1][0] * m[0][3]* m[3][1]+
+                m[3][0]* m[0][1]* m[1][3]-
                 m[3][0]* m[0][3]* m[1][1];
 
-        inv[3][2] = -m[0][0]  * m[1][1] * m[3][2]+ 
-                m[0][0]  * m[1][2]* m[3][1]+ 
-                m[1][0] * m[0][1]* m[3][2]- 
-                m[1][0] * m[0][2]* m[3][1]- 
-                m[3][0]* m[0][1]* m[1][2]+ 
+        inv[3][2] = -m[0][0]  * m[1][1] * m[3][2]+
+                m[0][0]  * m[1][2]* m[3][1]+
+                m[1][0] * m[0][1]* m[3][2]-
+                m[1][0] * m[0][2]* m[3][1]-
+                m[3][0]* m[0][1]* m[1][2]+
                 m[3][0]* m[0][2]* m[1][1];
 
-        inv[0][3] = -m[0][1]* m[1][2]* m[2][3]+ 
-                m[0][1]* m[1][3]* m[2][2]+ 
-                m[1][1] * m[0][2]* m[2][3]- 
-                m[1][1] * m[0][3]* m[2][2]- 
-                m[2][1]* m[0][2]* m[1][3]+ 
+        inv[0][3] = -m[0][1]* m[1][2]* m[2][3]+
+                m[0][1]* m[1][3]* m[2][2]+
+                m[1][1] * m[0][2]* m[2][3]-
+                m[1][1] * m[0][3]* m[2][2]-
+                m[2][1]* m[0][2]* m[1][3]+
                 m[2][1]* m[0][3]* m[1][2];
 
-        inv[1][3] = m[0][0] * m[1][2]* m[2][3]- 
-                m[0][0] * m[1][3]* m[2][2]- 
-                m[1][0]* m[0][2]* m[2][3]+ 
-                m[1][0]* m[0][3]* m[2][2]+ 
-                m[2][0]* m[0][2]* m[1][3]- 
+        inv[1][3] = m[0][0] * m[1][2]* m[2][3]-
+                m[0][0] * m[1][3]* m[2][2]-
+                m[1][0]* m[0][2]* m[2][3]+
+                m[1][0]* m[0][3]* m[2][2]+
+                m[2][0]* m[0][2]* m[1][3]-
                 m[2][0]* m[0][3]* m[1][2];
 
-        inv[2][3] = -m[0][0] * m[1][1] * m[2][3]+ 
-                m[0][0] * m[1][3]* m[2][1]+ 
-                m[1][0]* m[0][1]* m[2][3]- 
-                m[1][0]* m[0][3]* m[2][1]- 
-                m[2][0]* m[0][1]* m[1][3]+ 
+        inv[2][3] = -m[0][0] * m[1][1] * m[2][3]+
+                m[0][0] * m[1][3]* m[2][1]+
+                m[1][0]* m[0][1]* m[2][3]-
+                m[1][0]* m[0][3]* m[2][1]-
+                m[2][0]* m[0][1]* m[1][3]+
                 m[2][0]* m[0][3]* m[1][1];
 
-        inv[3][3] = m[0][0] * m[1][1] * m[2][2]- 
-                m[0][0] * m[1][2]* m[2][1]- 
-                m[1][0]* m[0][1]* m[2][2]+ 
-                m[1][0]* m[0][2]* m[2][1]+ 
-                m[2][0]* m[0][1]* m[1][2]- 
+        inv[3][3] = m[0][0] * m[1][1] * m[2][2]-
+                m[0][0] * m[1][2]* m[2][1]-
+                m[1][0]* m[0][1]* m[2][2]+
+                m[1][0]* m[0][2]* m[2][1]+
+                m[2][0]* m[0][1]* m[1][2]-
                 m[2][0]* m[0][2]* m[1][1];
 
         return inv;
     }
 
-    //Fairly efficient nearest neighbor search. Supply list of coordinates (array of Array(3)) and maximum radius to be considered a neighbor. 
-    //Returns a list of nodes with [{idx:0,neighbors:[{idx:j,position:[x,y,z],dist:d}]},{...},...]. Neighbors are auto sorted by distance.  
+    //Fairly efficient nearest neighbor search. Supply list of coordinates (array of Array(3)) and maximum radius to be considered a neighbor.
+    //Returns a list of nodes with [{idx:0,neighbors:[{idx:j,position:[x,y,z],dist:d}]},{...},...]. Neighbors are auto sorted by distance.
     //Current complexity: (n+1)/2, there are faster ways to do it but this should be good enough
     nearestNeighborSearch(positions, isWithinRadius) {
-        
+
         let node = {
             idx: null,
             position: [0,0,0],
@@ -442,7 +442,7 @@ export class Math3D { //some stuff for doing math in 3D
         }
 
         var nodes = [];
-        
+
         for(var i = 0; i < positions.length; i++){
             let newnode = Object.assign({},node);
             newnode.idx = i;
@@ -464,7 +464,7 @@ export class Math3D { //some stuff for doing math in 3D
                     newNeighborj.position = positions[i];
                     newNeighborj.dist = dist;
                     newNeighborj.idx = positions[j];
-                } 
+                }
             }
             nodes[i].neighbors.sort(function(a,b) {return a.dist - b.dist}); //Sort by distance
         }
@@ -483,7 +483,7 @@ export class camera { //pinhole camera model
         this.aspect = aspect;
 
         //View distance
-        this.near = near; 
+        this.near = near;
         this.far = far;
 
         //Focal length
@@ -506,7 +506,7 @@ export class camera { //pinhole camera model
     getPerspectiveMatrix(fieldOfViewInRadians=this.fov, aspectRatio=this.aspect, near=this.near, far=this.far) {
         var f = 1.0 / Math.tan(fieldOfViewInRadians / 2);
         var rangeInv = 1 / (near - far);
-      
+
         return [
           [f / aspectRatio, 0,                          0,   0],
           [0,               f,                          0,   0],
@@ -515,7 +515,7 @@ export class camera { //pinhole camera model
         ];
     }
 
-    
+
     getProjectionMatrix(width, height, depth) {
         return [
             [2/width,   0,        0, 0],
@@ -542,7 +542,7 @@ export class camera { //pinhole camera model
         return matrix2D.mul(this.getPerspectiveMatrix(), viewMat); //View projection matrix result
     }
 
-    
+
 }
 
 
@@ -558,7 +558,7 @@ export class Physics {
         };
 
         this.bodyPrim = {
-            
+
             index: null,
 
             collisionEnabled: true,
@@ -567,23 +567,23 @@ export class Physics {
             collisionBoundsScale: [1,1,1], //Can distort the bounding box, doesn't affect the sphere yet.
 
             dynamic: true,
-            
+
             position: [0,0,0], //[x,y,z] or [i,j,k]
             velocity: [0,0,0],
             acceleration: [0,0,0],
             forceImpulse: [0,0,0], //Instantaneous force (resets after applying)
-            
+
             drag: 0,
             mass: 1,
             restitution: 1, //Bounciness
             friction: 0, //Amount this surface slows other objects in contact along the contact plane
-        
+
             attractor: false, //N-body attractor
             attractionAccel: 9.81,
-            
+
             trigger: false,
             triggerFunc: null,
-            
+
             child: null, //Child object class instance (for modifying parameters)
         }
 
@@ -604,7 +604,7 @@ export class Physics {
                 var isColliding = this.collisionCheck(body,otherBody);
                 if(isColliding === true) { resolveCollision(body,otherBody); }
             });
-        });         
+        });
         */
 
         this.physicsBodies.forEach((body,i) => {
@@ -680,9 +680,9 @@ export class Physics {
     resolveCollision(body1,body2) { //Resolve what body1 does in contact with body2 (call twice with bodies reversed to calculate in both directions)
         //Elastic collisions
         var directionVec = Math3D.makeVec(body1.position,body2.position); //Get direction toward body2
-        var normal = Math3D.normalize(directionVec); 
+        var normal = Math3D.normalize(directionVec);
         if(body2.collisionType === "Sphere" || body2.collisionType === "Point") {
-           
+
             var body1velocityMag = Math3D.magnitude(body1.velocity);
 
             var body2AccelMag = Math3D.magnitude(body2.acceleration);
@@ -690,7 +690,7 @@ export class Physics {
 
             body1.velocity = [-normal[0]*body1velocityMag*body1.restitution,-normal[1]*body1velocityMag*body1.restitution,-normal[2]*body1velocityMag*body1.restitution]; //Adjust velocity
 
-            body1.forceImpulse[0] -= body2AccelMag*body2AccelNormal[0]*body2.mass; 
+            body1.forceImpulse[0] -= body2AccelMag*body2AccelNormal[0]*body2.mass;
             body1.forceImpulse[1] -= body2AccelMag*body2AccelNormal[1]*body2.mass;
             body1.forceImpulse[2] -= body2AccelMag*body2AccelNormal[2]*body2.mass;
 
@@ -723,7 +723,7 @@ export class Physics {
     //Checks if two bodies are colliding based on their collision setting
     collisionCheck(body1,body2) {
         if(body1.collisionEnabled === false || body2.collisionEnabled === false) return false;
-        
+
         //Check if within a range close enough to merit a collision check
         if(Math3D.distance(body1.position,body2.position) < Math.max(...body1.scale)*body1.collisionRadius+Math.max(...body2.scale)*body2.collisionRadius) {
             //Do collision check
@@ -741,12 +741,12 @@ export class Physics {
             else if (body1.collisionType === "Point") {
                 if(body2.collisionType === "Sphere") { isColliding = this.isPointInsideSphere(body1.position,body2.idx); }
                 if(body2.collisionType === "Box") { isColliding = this.isPointInsideBox(body1.position,body2.idx); }
-            }  
+            }
 
             return isColliding;
         }
         else return false
-        
+
 
     }
 
@@ -770,7 +770,7 @@ export class Physics {
 
     //Check if point is inside the box volume
     isPointInsideBox(point,boxIdx) {
-        
+
         let body1 = this.physicsBodies[boxIdx];
         //should precompute these for speed with Box objects as reference
         let body1minX = (body1.position[0]-body1.collisionRadius)*body1.collisionBoundsScale[0];
