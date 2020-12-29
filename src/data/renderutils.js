@@ -218,7 +218,7 @@ export class Math3D { //some stuff for doing math in 3D
     }
     
     translateM4(mat4, tx, ty, tz) {
-        var translate = makeTranslationM4(tx,ty,tz)
+        var translate = this.makeTranslationM4(tx,ty,tz)
         
         return matrix2D.mul(mat4, translate);
     }
@@ -234,7 +234,7 @@ export class Math3D { //some stuff for doing math in 3D
     }
 
     scaleM4(mat4,scaleX,scaleY,scaleZ){
-        var scale = makeScaleM4(scaleX,scaleY,scaleZ);
+        var scale = this.makeScaleM4(scaleX,scaleY,scaleZ);
         return matrix2D.multiply(mat4, scale);
     }
 
@@ -568,14 +568,14 @@ export class Physics {
 
             dynamic: true,
             
-            position: [0,0,0], //[x,y,z]
+            position: [0,0,0], //[x,y,z] or [i,j,k]
             velocity: [0,0,0],
             acceleration: [0,0,0],
             forceImpulse: [0,0,0], //Instantaneous force (resets after applying)
             
             drag: 0,
             mass: 1,
-            bounce: 1, //Springiness
+            restitution: 1, //Bounciness
             friction: 0, //Amount this surface slows other objects in contact along the contact plane
         
             attractor: false, //N-body attractor
@@ -598,16 +598,14 @@ export class Physics {
 
             //var positions = new Array(this.physicsBodies.length);
 
-            this.physicsBodies.forEach((otherBody,i) => {
-                positions.push(otherBody.position);
-
-                if(body1.index !== i) {   
-                    var isColliding = this.collisionCheck(body,otherBody);
-                    if(isColliding === true) {
-                        this.resolveCollision(body1,body2); //Now calculate forces
-                    }
+            for(var j = i+1; j < this.physicsBodies.length; j++) {
+                var otherBody = this.physicsBodies[j];
+                var isColliding = this.collisionCheck(body,otherBody);
+                if(isColliding === true) {
+                    this.resolveCollision(body,otherBody); //Now calculate forces
+                    this.resolveCollision(otherBody,body); //Now calculate forces
                 }
-            });
+            }
 
             /* //Nearest neighbor search optimization for collision detection (to cut down array searching)
             var neighborNodes = Math3D.nearestNeighborSearch(positions,this.globalSettings.maxDistCheck);
@@ -620,6 +618,8 @@ export class Physics {
                 });
             });         
             */
+
+            //Resolve Attractors
 
             //Apply any forces
             body.acceleration[0] += forceImpulse[0]/body.mass - body.acceleration[0]*drag;
@@ -676,9 +676,43 @@ export class Physics {
         ];
     }
 
-    resolveCollision(body1,body2) {
-        //Elastic collisions via normals
-        //Friction
+    resolveCollision(body1,body2) { //Resolve what body1 does in contact with body2 (call twice with bodies reversed to calculate in both directions)
+        //Elastic collisions
+        var directionVec = Math3D.makeVec(body1.position,body2.position); //Get direction toward body2
+        var normal = Math3D.normalize(directionVec); 
+        if(body2.collisionType === "Sphere" || body2.collisionType === "Point") {
+           
+            var body1velocityMag = Math3D.magnitude(body1.velocity);
+
+            var body2AccelMag = Math3D.magnitude(body2.acceleration);
+            var body2AccelNormal = Math3D.normalize(body2.acceleration);
+
+            body1.velocity = [-normal[0]*body1velocityMag*body1.restitution,-normal[1]*body1velocityMag*body1.restitution,-normal[2]*body1velocityMag*body1.restitution]; //Adjust velocity
+
+            body1.forceImpulse[0] -= body2AccelMag*body2AccelNormal[0]*body2.mass; 
+            body1.forceImpulse[1] -= body2AccelMag*body2AccelNormal[1]*body2.mass;
+            body1.forceImpulse[2] -= body2AccelMag*body2AccelNormal[2]*body2.mass;
+
+        }
+        else if (body2.collisionType === "Box") {
+            //Find which side was collided with
+            var max = Math.max(...directionVec);
+            var min = Math.min(...directionVec);
+            var side = max;;
+            if(Math.abs(min) > max) {
+                side = min;
+            }
+            var idx = directionVec.indexOf(side);
+
+            body1.velocity[idx] = -body1.velocity[idx]*body1.restitution; //Reverse velocity
+
+            var body2AccelMag = Math3D.magnitude(body2.acceleration);
+            var body2AccelNormal = Math3D.normalize(body2.acceleration);
+
+            body1.forceImpulse[idx] = -body2AccelNormal[idx]*body2AccelMag*body2.mass; //Add force
+
+            //Apply Friction
+        }
     };
 
     resolveAttractor(body1,body2) {
@@ -690,7 +724,7 @@ export class Physics {
         if(body1.collisionEnabled === false || body2.collisionEnabled === false) return false;
         
         //Check if within a range close enough to merit a collision check
-        if(Math3D.distance(body1.position,body2.position) < Math.max(body1.scale)*body1.collisionRadius+Math.max(body2.scale)*body2.collisionRadius) {
+        if(Math3D.distance(body1.position,body2.position) < Math.max(...body1.scale)*body1.collisionRadius+Math.max(...body2.scale)*body2.collisionRadius) {
             //Do collision check
             let isColliding = false;
             if(body1.collisionType === "Sphere") {
@@ -801,5 +835,7 @@ export class Physics {
         return dist > sphere.collisionRadius;
 
     }
+
+    //Plane collision
 
 }
