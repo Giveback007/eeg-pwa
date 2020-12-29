@@ -27,7 +27,7 @@ var receivedMsg = (msg: any) => {
             ["coherenceResults"]:coherenceData
         });
 
-        var lastPostTime = store.getState().lastPostTime; //
+        var lastPostTime = store.getState().lastPostTime;
 
         eegConnection.channelTags.forEach((row: any,i: any) => {
             if((row.tag !== null) && (i < eegConnection.nChannels)){
