@@ -68,35 +68,35 @@ export class SmoothieApplet extends Applet<S,M> {
         var graphmode = document.getElementById(this.class.canvasId+"mode").value;
         if((graphmode === "alpha") || (graphmode === "bandpowers")) {
             if(graphmode === "alpha"){
-            atlas.channelTags.forEach((row,i) => {
-                var coord = {};
-                coord = atlas.getAtlasCoordByTag(row.tag);
+              atlas.channelTags.forEach((row,i) => {
+                  var coord = {};
+                  coord = atlas.getAtlasCoordByTag(row.tag);
 
-                if(i < this.class.series.length - 1){
-                    this.class.series[i].append(Date.now(), Math.max(...coord.data.slices.alpha1[coord.data.slices.alpha1.length-1]));
-                }
-            });
+                  if(i < this.class.series.length - 1){
+                      this.class.series[i].append(Date.now(), Math.max(...coord.data.slices.alpha1[coord.data.slices.alpha1.length-1]));
+                  }
+              });
             }
             else if(graphmode === "bandpowers") {
-            var ch = document.getElementById(this.class.canvasId+"channel").value;
-            var tag = null;
-            atlas.channelTags.find((o,i) => {
-                if(o.ch === ch){
-                tag = o.tag;
-                return true;
-                }
-            });
-            if(tag !== null){
-                var coord = atlas.getAtlasCoordByTag(tag);
-                this.class.bulkAppend([
-                    Math.max(...coord.data.slices.delta[coord.data.slices.delta.length-1]),
-                    Math.max(...coord.data.slices.theta[coord.data.slices.theta.length-1]),
-                    Math.max(...coord.data.slices.alpha1[coord.data.slices.alpha1.length-1]),
-                    Math.max(...coord.data.slices.alpha2[coord.data.slices.alpha2.length-1]),
-                    Math.max(...coord.data.slices.beta[coord.data.slices.beta.length-1]),
-                    Math.max(...coord.data.slices.lowgamma[coord.data.slices.lowgamma.length-1])
-                ]);
-            }
+              var ch = document.getElementById(this.class.canvasId+"channel").value;
+              var tag = null;
+              atlas.channelTags.find((o,i) => {
+                  if(o.ch === ch){
+                  tag = o.tag;
+                  return true;
+                  }
+              });
+              if(tag !== null){
+                  var coord = atlas.getAtlasCoordByTag(tag);
+                  this.class.bulkAppend([
+                      Math.max(...coord.data.slices.delta[coord.data.slices.delta.length-1]),
+                      Math.max(...coord.data.slices.theta[coord.data.slices.theta.length-1]),
+                      Math.max(...coord.data.slices.alpha1[coord.data.slices.alpha1.length-1]),
+                      Math.max(...coord.data.slices.alpha2[coord.data.slices.alpha2.length-1]),
+                      Math.max(...coord.data.slices.beta[coord.data.slices.beta.length-1]),
+                      Math.max(...coord.data.slices.lowgamma[coord.data.slices.lowgamma.length-1])
+                  ]);
+              }
             }
         }
         else if (graphmode === "coherence") {

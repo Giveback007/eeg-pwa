@@ -1,83 +1,5 @@
 //Utilities for CPU-side render prep. Contains graphnodes and projection matrices. For super optimal matrix math use glMatrix (https://github.com/toji/gl-matrix)
 
-export class graphNode { //Use this to organize 3D models hierarchically if needed
-    constructor(parent=null, children=[null], id=null) {
-        this.id = id;
-        this.parent = parent; //Access/inherit parent object
-        this.children = children; //List of child objects for this node, each with independent data
-        this.globalPos = {x:0,y:0,z:0}; //Global x,y,z position
-        this.localPos = {x:0,y:0,z:0};  //Local x,y,z position offset. Render as global + local pos
-        this.globalRot = {x:0,y:0,z:0}; //Global x,y,z rotation (rads)
-        this.localRot = {x:0,y:0,z:0}; //Local x,y,z rotation (rads). Render as global + local rot
-        this.functions = []; // List of functions. E.g. function foo(x) {return x;}; this.functions["foo"] = foo; this.functions.foo = foo(x) {return x;}. Got it?
-
-        //3D Rendering stuff
-        this.model = null; //
-        this.mesh = [[0,0,0],[1,1,1],[1,0,0],[0,0,0]]; // Model vertex list, array of vec3's xyz, so push x,y,z components. For ThreeJS use THREE.Mesh(vertices, material) to generate a model from this list with the selected material
-        this.colors = [[0,0,0],[255,255,255],[255,0,0],[0,0,0]]; // Vertex color list, array of vec3's rgb or vec4's rgba for outside of ThreeJS. For ThreeJS use THREE.Color("rgb(r,g,b)") for each array item.
-        this.materials = []; // Array of materials maps i.e. lighting properties and texture maps.
-        this.textures = []; // Array of texture image files.
-
-        if(parent !== null){
-            this.inherit(parent);
-        }
-    }
-
-    inherit(parent) { //Sets globals to be equal to parent info and adds parent functions to this node.
-        this.parent = parent;
-        this.globalPos = parent.globalPos;
-        this.globalRot = parent.globalRot;
-        this.functions.concat(parent.functions);
-        this.children.forEach((child)=>{
-            child.globalPos = parent.global;
-            child.functions.concat(parent.functions);
-        });
-    }
-
-    addChild(child){ //Add child node reference
-        this.children.push(child); //Remember: JS is all pass by object reference.
-    }
-
-    removeChild(id){ //Remove child node reference
-        this.children.forEach((child, idx)=>{
-            if(child.id == id){
-                this.children.splice(idx,1);
-            }
-        });
-    }
-
-    translate(offset=[0,0,0]){ //Recursive global translation of this node and all children
-        this.globalPos=[this.globalPos.x+offset[0],this.globalPos.y+offset[1],this.globalPos.z+offset[2]];
-        this.children.forEach((child)=>{
-            child.translate(offset);
-        });
-    }
-
-    setGlobalRotation(offset=[0,0,0]){ //Offsets the global rotation of this node and all child nodes (radian)
-        this.globalRot.x+=offset[0];
-        this.globalRot.y+=offset[1];
-        this.globalRot.z+=offset[2];
-        this.children.forEach((child)=>{
-            child.setGlobalRotation(offset);
-        });
-    }
-
-    getGlobalMesh() { //Get mesh with rotation and translation applied
-        var globalmeshvertices = [];
-        var rotated = Math3D.rotateMesh(this.mesh,this.globalRot.x+this.localRot.x,this.globalRot.y+this.localRot.y,this.globalRot.z+this.localRot.z);
-        for(var i = 0; i < this.mesh.length; i++){
-            globalmeshvertices.push([
-                rotated[i][0]+this.globalPos.x+this.localPos.x,
-                rotated[i][1]+this.globalPos.y+this.localPos.y,
-                rotated[i][2]+this.globalPos.z+this.localPos.z
-            ]);
-        }
-
-        return globalmeshvertices;
-    }
-
-}
-
 
 export class matrix2D { //some functions for 2d matrix work
     constructor(){
@@ -475,6 +397,87 @@ export class Math3D { //some stuff for doing math in 3D
 }
 
 
+
+
+export class graphNode { //Use this to organize 3D models hierarchically if needed
+    constructor(parent=null, children=[null], id=null) {
+        this.id = id;
+        this.parent = parent; //Access/inherit parent object
+        this.children = children; //List of child objects for this node, each with independent data
+        this.globalPos = {x:0,y:0,z:0}; //Global x,y,z position
+        this.localPos = {x:0,y:0,z:0};  //Local x,y,z position offset. Render as global + local pos
+        this.globalRot = {x:0,y:0,z:0}; //Global x,y,z rotation (rads)
+        this.localRot = {x:0,y:0,z:0}; //Local x,y,z rotation (rads). Render as global + local rot
+        this.functions = []; // List of functions. E.g. function foo(x) {return x;}; this.functions["foo"] = foo; this.functions.foo = foo(x) {return x;}. Got it?
+
+        //3D Rendering stuff
+        this.model = null; //
+        this.mesh = [[0,0,0],[1,1,1],[1,0,0],[0,0,0]]; // Model vertex list, array of vec3's xyz, so push x,y,z components. For ThreeJS use THREE.Mesh(vertices, material) to generate a model from this list with the selected material
+        this.colors = [[0,0,0],[255,255,255],[255,0,0],[0,0,0]]; // Vertex color list, array of vec3's rgb or vec4's rgba for outside of ThreeJS. For ThreeJS use THREE.Color("rgb(r,g,b)") for each array item.
+        this.materials = []; // Array of materials maps i.e. lighting properties and texture maps.
+        this.textures = []; // Array of texture image files.
+
+        if(parent !== null){
+            this.inherit(parent);
+        }
+    }
+
+    inherit(parent) { //Sets globals to be equal to parent info and adds parent functions to this node.
+        this.parent = parent;
+        this.globalPos = parent.globalPos;
+        this.globalRot = parent.globalRot;
+        this.functions.concat(parent.functions);
+        this.children.forEach((child)=>{
+            child.globalPos = parent.global;
+            child.functions.concat(parent.functions);
+        });
+    }
+
+    addChild(child){ //Add child node reference
+        this.children.push(child); //Remember: JS is all pass by object reference.
+    }
+
+    removeChild(id){ //Remove child node reference
+        this.children.forEach((child, idx)=>{
+            if(child.id == id){
+                this.children.splice(idx,1);
+            }
+        });
+    }
+
+    translate(offset=[0,0,0]){ //Recursive global translation of this node and all children
+        this.globalPos=[this.globalPos.x+offset[0],this.globalPos.y+offset[1],this.globalPos.z+offset[2]];
+        this.children.forEach((child)=>{
+            child.translate(offset);
+        });
+    }
+
+    setGlobalRotation(offset=[0,0,0]){ //Offsets the global rotation of this node and all child nodes (radian)
+        this.globalRot.x+=offset[0];
+        this.globalRot.y+=offset[1];
+        this.globalRot.z+=offset[2];
+        this.children.forEach((child)=>{
+            child.setGlobalRotation(offset);
+        });
+    }
+
+    getGlobalMesh() { //Get mesh with rotation and translation applied
+        var globalmeshvertices = [];
+        var rotated = Math3D.rotateMesh(this.mesh,this.globalRot.x+this.localRot.x,this.globalRot.y+this.localRot.y,this.globalRot.z+this.localRot.z);
+        for(var i = 0; i < this.mesh.length; i++){
+            globalmeshvertices.push([
+                rotated[i][0]+this.globalPos.x+this.localPos.x,
+                rotated[i][1]+this.globalPos.y+this.localPos.y,
+                rotated[i][2]+this.globalPos.z+this.localPos.z
+            ]);
+        }
+
+        return globalmeshvertices;
+    }
+
+}
+
+
 export class camera { //pinhole camera model
     constructor (position={x:0,y:0,z:0},rotation={x:0,y:0,z:0},fov=90,aspect=1,near=0,far=1,fx=1,fy=1,cx=0,cy=0) {
         this.position = position;
@@ -588,7 +591,7 @@ export class Physics {
         }
 
         for (let i = 0; i < nBodies; i++) {
-            this.physicsBodies.push(new this.bodyPrim);
+            this.physicsBodies.push(Object.assign({},this.bodyPrim));
             this.physicsBodies[i].index = i;
         }
     }
