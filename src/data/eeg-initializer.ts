@@ -73,13 +73,151 @@ store.actionSub('WORKER_DONE', (a) => {
     }
 });
 
-store.actionSub('SET_TAGS', (a) => {
+store.actionSub('SET_CHANNELVIEW' (a) => {
+    var val = document.getElementById("channelView").value; //s.channelView
+    if(val.length === 0) { return; }
 
+    var arr = val.split(",");
+    atlas.channelTags.forEach((row,j) => { atlas.channelTags[j].viewing = false; });
+    var newSeries = [{}];
+
+    arr.forEach((item,i) => {
+        var found = false;
+        let getTags = atlas.channelTags.find((o, j) => {
+
+        if((o.ch === parseInt(item)) || (o.tag === item)){
+        //console.log(item);
+        atlas.channelTags[j].viewing = true;
+        found = true;
+        return true;
+        }
+        });
+
+
+        if (found === false){ //add tag
+        if(parseInt(item) !== NaN){
+            atlas.channelTags.push({ch:parseInt(item), tag: null, viewing:true});
+        }
+        else {
+            alert("Tag not assigned to channel: ", item);
+        }
+        }
+    });
+
+    //setuPlot();
+});
+
+store.actionSub('SET_TAGS', (a) => {
+    var val = document.getElementById("channelTags").value; //s.channelTags
+    if(val.length === 0) { return; }
+    //console.log(val);
+    var arr = val.split(";");
+    //console.log(arr);
+    //channelTags.forEach((row,j) => { channelTags[j].viewing = false; });
+    //console.log(arr);
+    arr.forEach((item,i) => {
+      var dict = item.split(":");
+      var found = false;
+      let setTags = atlas.channelTags.find((o, j) => {
+        if(o.ch === parseInt(dict[0])){
+          if(dict[1] === "delete"){
+            atlas.channelTags.splice(j,1);
+          }
+          else{
+            let otherTags = atlas.channelTags.find((p,k) => {
+              if(p.tag === dict[1]){
+                atlas.channelTags[k].tag = null;
+                return true;
+              }
+            });
+
+            //console.log(o);
+            atlas.channelTags[j].tag = dict[1];
+            atlas.channelTags[j].viewing = true;
+
+            if(dict[2] !== undefined){
+              var atlasfound = false;
+              var searchatlas = atlas.fftMap.map.find((p,k) => {
+                if(p.tag === dict[1]){
+                  atlasfound = true;
+                  return true;
+                }
+              });
+              if(atlasfound !== true) {
+                var coords = dict[2].split(",");
+                if(coords.length === 3){
+                    atlas.addToAtlas(dict[1],parseFloat(coords[0]),parseFloat(coords[1]),parseFloat(coords[2]))
+                }
+              }
+            }
+          }
+          found = true;
+          return true;
+          }
+        else if(o.tag === dict[1]){
+            atlas.channelTags[j].tag = null; //Set tag to null since it's being assigned to another channel
+        }
+      });
+      if (found === false){
+        var ch = parseInt(dict[0]);
+        if(ch !== NaN) {
+          if((ch >= 0) && (ch < EEG.nChannels)){
+            atlas.channelTags.push({ch:parseInt(ch), tag: dict[1], viewing: true});
+
+            if(dict[2] !== undefined){
+              var atlasfound = false;
+              var searchatlas = atlas.fftMap.map.find((p,k) => {
+                if(p.tag === dict[1]){
+                  atlasfound = true;
+                  return true;
+                }
+              });
+              if(atlasfound !== true) {
+                var coords = dict[2].split(",");
+                if(coords.length === 3){
+                  atlas.addToAtlas(dict[1],parseFloat(coords[0]),parseFloat(coords[1]),parseFloat(coords[2]))
+                }
+              }
+            }
+          }
+        }
+      }
+    });
+
+    atlas.coherenceMap = atlas.genCoherenceMap(atlas.channelTags); //Reset coherence map with new tags
+    atlas.coherenceMap.shared.bandPassWindow = atlas.fftMap.shared.bandPassWindow;
+    atlas.coherenceMap.shared.bandFreqs = atlas.atlas.shared.bandFreqs;
+
+    //setBrainMap();
+    //setuPlot();
 });
 
 //Sub action for setting the bandpass filter to update the bandpass
 store.actionSub('SET_BANDPASS', (a) => {
+    var s = store.getState();
+    var freq0 = parseFloat(document.getElementById("freqStart").value); //s.freqStart
+    var freq1 = parseFloat(document.getElementById("freqEnd").value); //s.freqEnd
+    if (freq0 > freq1) {
+      freq0 = 0;
+    }
+    if(freq1 > EEG.sps*0.5){
+      freq1 = EEG.sps*0.5; document.getElementById("freqEnd").value = freq1; //s.freqEnd
+    }
+    s.freqStart = freq0;
+    s.freqEnd = freq1;
 
+    atlas.fftMap = atlas.makeAtlas10_20(); //reset atlas
+
+    var bandPassWindow = atlas.bandPassWindow(freq0,freq1,EEG.sps);
+
+    atlas.fftMap.shared.bandPassWindow = bandPassWindow;//Push the x-axis values for each frame captured as they may change - should make this lighter
+    atlas.atlas.shared.bandFreqs = EEG.getBandFreqs(bandPassWindow); //Update bands accessed by the atlas for averaging
+
+    if(s.fdBackMode === "coherence") {
+      atlas.coherenceMap = atlas.genCoherenceMap(atlas.channelTags);
+      atlas.coherenceMap.bandPasswindow - bandPassWindow;
+      atlas.coherenceMap.shared.bandFreqs = atlas.atlas.shared.bandFreqs;
+    }
 });
 
 function runEEGWorker() {
