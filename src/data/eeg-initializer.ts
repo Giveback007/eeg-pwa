@@ -242,13 +242,13 @@ function bufferEEGData() {
 }
 
 function updateBandPass(freqStart, freqEnd) {
-
+    var s = store.getState();
     var freq0 = freqStart; var freq1 = freqEnd;
     if (freq0 > freq1) {
      freq0 = 0;
     }
     if(freq1 > eegConnection.sps*0.5){
-     freq1 = eegConnection.sps*0.5; document.getElementById("freqEnd").value = freq1;
+     freq1 = eegConnection.sps*0.5; document.getElementById("freqEnd").value = freq1; // store.setState({ "freqEnd": freq1 });
     }
 
     atlas.fftMap = atlas.makeAtlas10_20(); //reset atlas
