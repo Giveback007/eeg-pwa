@@ -94,11 +94,6 @@ class AppStateManager extends StateManager<State, Actions> {
         this.setState({ [key]: arr });
     }
 
-    setEegData(data: any) { // FIXME
-      this.throttledSetState(50, {
-        lastVal: data
-      })
-    }
 }
 
 export const browserHist = createBrowserHistory();

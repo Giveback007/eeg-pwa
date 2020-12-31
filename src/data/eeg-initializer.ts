@@ -14,8 +14,8 @@ var defaultTags = [
 ];
 
 export const atlas = new eegAtlas(defaultTags);
-export const eegConnection = new eeg32(() => {
-    store.setEegData(eegConnection.data); // Throttled updating
+export const eegConnection = new eeg32(undefined,() => {
+    beginWorker();
 }); //onDecoded callback to set state on front end.
 
 var receivedMsg = (msg: any) => {
@@ -57,20 +57,30 @@ atlas.coherenceMap.shared.bandPassWindow = bandPassWindow;
 atlas.coherenceMap.shared.bandFreqs = atlas.fftMap.shared.bandFreqs;
 
 
+let workerThrottle = 50; //throttle speed in milliseconds
+
 store.actionSub('WORKER_DONE', (a) => {
     var s = store.getState();
-    store.setState({["lastPostTime"]: eegConnection.data.ms[eegConnection.data.ms.length-1]});
-    if(s.fdBackMode === 'coherence') {
-        workers.postToWorker({foo:'coherence', input:[bufferData(), s.nSec, s.freqStart, s.freqEnd, eegConnection.scalar]});
+    if(performance.now() - s.lastPostTime > workerThrottle)
+    {
+        store.setState({["lastPostTime"]: eegConnection.data.ms[eegConnection.data.ms.length-1]});
+        if(s.fdBackMode === 'coherence') {
+            workers.postToWorker({foo:'coherence', input:[bufferEEGData(), s.nSec, s.freqStart, s.freqEnd, eegConnection.scalar]});
+        }
+    }
+    else {
+        setTimeout(()=>{
+            store.setState({["lastPostTime"]: eegConnection.data.ms[eegConnection.data.ms.length-1]});
+            if(s.fdBackMode === 'coherence') {
+                workers.postToWorker({foo:'coherence', input:[bufferEEGData(), s.nSec, s.freqStart, s.freqEnd, eegConnection.scalar]});
+            }
+        },
+        performance.now()-s.lastPostTime);//Throttle worker posting time
     }
 });
 
-store.stateSub('posFFTList', (s) => {
-    //on posFFTList update: atlas.mapFFTData(s.posFFTList,s.lastPostTime)
-});
+store.actionSub('SET_TAGS', (a) => {
 
-store.stateSub('coherenceResults', (s) => {
-    //on coherenceResults update: atlas.mapCoherenceData(s.coherenceResults)
 });
 
 //Sub action for setting the bandpass filter to update the bandpass
@@ -78,7 +88,15 @@ store.actionSub('SET_BANDPASS', (a) => {
 
 });
 
-function bufferData() {
+function beginWorker() {
+    var s = store.getState();
+    store.setState({["lastPostTime"]: eegConnection.data.ms[eegConnection.data.ms.length-1]});
+    if(s.fdBackMode === 'coherence') {
+        workers.postToWorker({foo:'coherence', input:[bufferEEGData(), s.nSec, s.freqStart, s.freqEnd, eegConnection.scalar]});
+    }
+}
+
+function bufferEEGData() {
     var buffer = [];
     for(var i = 0; i < atlas.channelTags.length; i++){
         if(i < eegConnection.nChannels) {

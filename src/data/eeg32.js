@@ -5,10 +5,11 @@ import 'regenerator-runtime/runtime' //For async functions on node\\
 export class eeg32 { //Contains structs and necessary functions/API calls to analyze serial data for the FreeEEG32
 
     constructor(
-		onDecoded,
+		onDecodedCallback = this.onDecodedCallback,
+		onConnectedCallback = this.onConnectedCallback,
 		) {
-		this.onDecoded = onDecoded;
-
+		this.onDecodedCallback = onDecodedCallback;
+		this.onConnectedCallback = onConnectedCallback;
         //Free EEG 32 data structure:
         /*
             [stop byte, start byte, counter byte, 32x3 channel data bytes (24 bit), 3x2 accelerometer data bytes, stop byte, start byte...]
@@ -111,7 +112,7 @@ export class eeg32 { //Contains structs and necessary functions/API calls to ana
 	}
 
 	//Callbacks
-	onDecoded(){
+	onDecodedCallback(){
 		//console.log("new data!");
 
 	}
