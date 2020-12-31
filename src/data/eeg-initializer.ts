@@ -15,7 +15,7 @@ var defaultTags = [
 
 export const atlas = new eegAtlas(defaultTags);
 export const eegConnection = new eeg32(undefined,() => {
-    beginWorker();
+    runEEGWorker();
 }); //onDecoded callback to set state on front end.
 
 var receivedMsg = (msg: any) => {
@@ -63,17 +63,11 @@ store.actionSub('WORKER_DONE', (a) => {
     var s = store.getState();
     if(performance.now() - s.lastPostTime > workerThrottle)
     {
-        store.setState({["lastPostTime"]: eegConnection.data.ms[eegConnection.data.ms.length-1]});
-        if(s.fdBackMode === 'coherence') {
-            workers.postToWorker({foo:'coherence', input:[bufferEEGData(), s.nSec, s.freqStart, s.freqEnd, eegConnection.scalar]});
-        }
+        runEEGWorker();
     }
     else {
         setTimeout(()=>{
-            store.setState({["lastPostTime"]: eegConnection.data.ms[eegConnection.data.ms.length-1]});
-            if(s.fdBackMode === 'coherence') {
-                workers.postToWorker({foo:'coherence', input:[bufferEEGData(), s.nSec, s.freqStart, s.freqEnd, eegConnection.scalar]});
-            }
+            runEEGWorker();
         },
         performance.now()-s.lastPostTime);//Throttle worker posting time
     }
@@ -88,7 +82,7 @@ store.actionSub('SET_BANDPASS', (a) => {
 
 });
 
-function beginWorker() {
+function runEEGWorker() {
     var s = store.getState();
     store.setState({["lastPostTime"]: eegConnection.data.ms[eegConnection.data.ms.length-1]});
     if(s.fdBackMode === 'coherence') {
