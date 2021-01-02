@@ -1,6 +1,6 @@
 import { eegConnection, atlas } from './eeg-initializer.ts'
-import {SmoothieChartMaker, uPlotMaker, TimeChartMaker, Spectrogram, mirrorBarChart, eegBarChart, brainMap2D, BufferLoader, SoundJS, geolocateJS} from './eegvisuals'
-import {gpuUtils} from './gpuUtils'
+import {SmoothieChartMaker, uPlotMaker, TimeChartMaker, Spectrogram, mirrorBarChart, eegBarChart, brainMap2D, BufferLoader, SoundJS, geolocateJS} from './js/eegvisuals'
+import {gpuUtils} from './js/gpuUtils'
 import { html, render as htmlrender } from 'lit-html';
 import { store } from './store';
 import { Applet } from 'src/components/Applet/Applet';
