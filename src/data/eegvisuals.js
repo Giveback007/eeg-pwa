@@ -966,8 +966,110 @@ export class Spectrogram {
 
 
 
+//Simple dynamic triangle mesh generation of spectrogram data.
+export class Spectrogram3D {
+	constructor(canvasId, peakAmp = 1) {
+
+		this.canvas = document.getElementById(canvasId);
+		this.ctx = this.canvas.getContext("webgl");
+
+		this.currentAmplitudes = []; //z-axis
+		this.lastAmplitudes = [];
+		this.frequencies = []; //x-axis
+
+		this.peakAmp = peakAmp;
+
+		this.triangleMesh = []; //Render with GL.TRIANGLES set
+		this.colorMesh = [];
+		this.nSegments = 0;
+		this.meshMaxSegments = 50;
+
+		this.animationDelay = 50;
+	}
+
+	setColorFromIntensity(intensity) {
+		if(intensity < 0.3334) {
+			return (0,intensity*765,intensity*255);
+		}
+		else if (intensity < 0.6664 && intensity > 0.3334) {
+			return ((0.6664-intensity)*255,intensity*128,1.5*intensity*255);
+		}
+		else {
+			return (intensity*255,0,(1-intensity)*255);
+		}
+	}
+
+	//Input frequency domain amplitude spectrum of two time steps. Returns vertices and colors
+	gen3DVerticesStep(frequencies, amplitudes1, amplitudes2, offset=0) {
+
+		let Triangles = [];
+		let Colors = [];
+
+		for(let i=0; i<frequencies.length-1; i++) { //List of vec3's
+
+			Triangles.push(
+				frequencies[i],  offset,  amplitudes1[i],
+				frequencies[i+1],offset,  amplitudes1[i+1],
+				frequencies[i],  offset+1,amplitudes2[i],
+				frequencies[i],  offset+1,amplitudes2[i],
+				frequencies[i+1],offset+1,amplitudes2[i+1],
+				frequencies[i+1],offset,  amplitudes1[i+1]
+			);
+
+			var peak1 = 	amplitudes1[i]/this.peakAmp;
+			var peak1_2 = 	amplitudes1[i+1]/this.peakAmp;
+			var peak2 = 	amplitudes2[i]/this.peakAmp;
+			var peak2_2 = 	amplitudes2[i+1]/this.peakAmp;
+
+			if(peak1 > 1) {peak1 = 1;} else if(peak1 < 0) {peak1 = 0;}
+			if(peak1_2 > 1) {peak1_2 = 1;} else if(peak1_2 < 0) {peak1_2 = 0;}
+			if(peak2 > 1) {peak2 = 1;} else if(peak2 < 0) {peak2 = 0;}
+			if(peak2_2 > 1) {peak2_2 = 1;} else if(peak2_2 < 0) {peak2_2 = 0;}
+
+			Colors.push(
+				setColorFromIntensity(peak1),
+				setColorFromIntensity(peak1_2),
+				setColorFromIntensity(peak2),
+				setColorFromIntensity(peak2),
+				setColorFromIntensity(peak2_2),
+				setColorFromIntensity(peak1_2)
+			)
+		}
+
+		return [Triangles, Colors];
+	}
+
+	//Latest data at y=0, last data at y=this.nSegments+1
+	step( newAmplitudes = this.currentAmplitudes, newFrequencies = this.frequencies ) {
+		this.lastAmplitudes = this.currentAmplitudes
+		this.currentAmplitudes = newAmplitudes;
+		this.frequencies = newFrequencies;
+
+		if(this.nSegments > 0) {
+			this.triangleMesh.map((item, idx) => {if((idx-1) % 3 === 0) item = item+1;} ); //scroll the mesh along the y axis
+		}
+
+		var genStep = this.gen3DVerticesStep(this.frequencies,this.lastAmplitudes,this.currentAmplitudes)
+
+		this.triangleMesh.push(...genStep[0]);
+		this.colorMesh.push(...genStep[1]);
+
+		if(this.nSegments === this.meshMaxSegments) {
+			this.triangleMesh.splice(0,this.frequencies.length*6);
+			this.colorMesh.splice(0,this.frequencies.length*6);
+		}
+		else {
+			this.nSegments++;
+		}
+	}
+
+	//Run this then
+	animate = () => {
+		setTimeout(() => {requestAnimationFrame(this.step);},this.animationDelay);
+	}
 
 
+}
 
 
 

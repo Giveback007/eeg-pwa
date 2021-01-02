@@ -810,4 +810,27 @@ export class eegmath {
 		return smaArr;
 	}
 
+	//Linear interpolation from https://stackoverflow.com/questions/26941168/javascript-interpolate-an-array-of-numbers. Input array and number of samples to fit the data to
+	interpolateArray(data, fitCount) {
+
+		var norm = this.canvas.height/data.length;
+
+		var linearInterpolate = function (before, after, atPoint) {
+			return (before + (after - before) * atPoint)*norm;
+		};
+
+		var newData = new Array();
+		var springFactor = new Number((data.length - 1) / (fitCount - 1));
+		newData[0] = data[0]; // for new allocation
+		for ( var i = 1; i < fitCount - 1; i++) {
+			var tmp = i * springFactor;
+			var before = new Number(Math.floor(tmp)).toFixed();
+			var after = new Number(Math.ceil(tmp)).toFixed();
+			var atPoint = tmp - before;
+			newData[i] = linearInterpolate(data[before], data[after], atPoint);
+		}
+		newData[fitCount - 1] = data[data.length - 1]; // for new allocation
+		return newData;
+	};
+
 }

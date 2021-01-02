@@ -3,7 +3,7 @@
 //var parentpath = localpath.substr(0,localpath.lastIndexOf("/"));
 
 import { gpuUtils } from './utils/gpuUtils.js';
-import { EegMath } from './eeg32';
+import { eegmath } from './eeg32';
 
 
 const gpu = new gpuUtils();
@@ -15,19 +15,19 @@ onmessage = (e) => {
 
   switch (e.data.foo) {
     case "xcor": // Takes 2 1D arrays
-      output = EegMath.crosscorrelation(e.data.input[0],e.data.input[1]);
+      output = eegmath.crosscorrelation(e.data.input[0],e.data.input[1]);
       break;
     case "autocor": // Takes 1 1D array
-      output = EegMath.autocorrelation(e.data.input);
+      output = eegmath.autocorrelation(e.data.input);
       break;
     case "cov1d": // Takes 2 1D arrays
-      output = EegMath.cov1d(e.data.input[0],e.data.input[1]);
+      output = eegmath.cov1d(e.data.input[0],e.data.input[1]);
       break;
     case "cov2d": // Takes 1 2D array with equal width rows
-      output = EegMath.cov2d(e.data.input);
+      output = eegmath.cov2d(e.data.input);
       break;
     case "sma": // Takes 1 1D array and an sma window size
-      output = EegMath.sma(e.data.input[0],e.data.input[1]);
+      output = eegmath.sma(e.data.input[0],e.data.input[1]);
       break;
     case "dft": // Takes 1 1D array and the number of seconds, and an optional scalar value
       var scalar = 1;
@@ -45,7 +45,7 @@ onmessage = (e) => {
       output = gpu.MultiChannelDFT_Bandpass(e.data.input[0],e.data.input[1],e.data.input[2],e.data.input[3],scalar);
       break;
     case "coherence": // Input 2D array, number of seconds, beginning frequency, ending frequency. Outputs an array of products of each FFT with each associated correlogram to create a network map of all available channels, ordered by channel
-      const correlograms = EegMath.correlograms(e.data.input[0]);
+      const correlograms = eegmath.correlograms(e.data.input[0]);
       const buffer = [...e.data.input[0],...correlograms];
       var dfts;
 
