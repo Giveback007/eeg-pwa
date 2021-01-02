@@ -18,7 +18,7 @@ var defaultTags = [
 
 export const atlas = new eegAtlas(defaultTags);
 export const eegConnection = new eeg32(undefined,() => {
-    runEEGWorker();
+    store.setState({rawFeed: true});
 }); //onDecoded callback to set state on front end.
 
 const receivedMsg = (msg: { foo: string, output: any[] }) => {
@@ -62,13 +62,7 @@ atlas.coherenceMap.shared.bandFreqs = atlas.fftMap.shared.bandFreqs;
 
 
 store.actionSub('COHERENCE_WORKER_DONE', (a) => {
-  const s = store.getState();
-
-  if(s.fdBackMode === 'coherence') {
-      store.setState({lastPostTime:eegConnection.data.ms[eegConnection.data.ms.length-1]})
-      workers.postToWorker({foo:'coherence', input:[bufferEEGData(), s.nSec, s.freqStart, s.freqEnd, eegConnection.scalar]});
-  }
-
+  runEEGWorker();
 });
 
 store.actionSub('CHANNEL_VIEW_SET', (a) => {
@@ -216,11 +210,22 @@ store.actionSub(['EEG_CONNECT', 'EEG_DISCONNECT'], async (a) => {
     }
 });
 
+store.actionSub('EEG_ANALYZE', async (a) => {
+  store.setState({analyze: true});
+  runEEGWorker();
+});
+
+store.actionSub('EEG_STOP', async (a) => {
+  store.setState({analyze: false})
+});
+
 function runEEGWorker() {
     var s = store.getState();
-    store.setState({["lastPostTime"]: eegConnection.data.ms[eegConnection.data.ms.length-1]});
-    if(s.fdBackMode === 'coherence') {
-        workers.postToWorker({foo:'coherence', input:[bufferEEGData(), s.nSec, s.freqStart, s.freqEnd, eegConnection.scalar]});
+    if(s.analyze === true){
+      store.setState({["lastPostTime"]: eegConnection.data.ms[eegConnection.data.ms.length-1]});
+      if(s.fdBackMode === 'coherence') {
+          workers.postToWorker({foo:'coherence', input:[bufferEEGData(), s.nSec, s.freqStart, s.freqEnd, eegConnection.scalar]});
+      }
     }
 }
 

@@ -29,7 +29,6 @@ export type State = {
     posFFTList: number[],
     /** List of coherence results from worker */
     coherenceResults: number[],
-    bandPassWindow: number[],
     nSecAdcGraph: number,
     fdBackMode: "coherence" | "scp",
     analyze: boolean,
