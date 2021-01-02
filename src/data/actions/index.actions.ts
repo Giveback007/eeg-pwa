@@ -23,6 +23,6 @@ export const Actions = {
     EEG_DISCONNECT: () => a({ type: "EEG_DISCONNECT" } as const),
 }
 
-export type Actions = ReturnType<
+export type ActionTypes = ReturnType<
     typeof Actions[keyof typeof Actions]
 >;

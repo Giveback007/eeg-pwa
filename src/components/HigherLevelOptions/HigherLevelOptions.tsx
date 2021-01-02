@@ -1,8 +1,14 @@
 import { Button } from '@material-ui/core';
 import { TextField } from '@material-ui/core';
-import React, { ChangeEvent, ChangeEventHandler, MouseEvent } from 'react';
+import React, { ChangeEvent } from 'react';
 import { Actions } from 'src/data/actions/index.actions';
 import { icons } from '../icons';
+
+// added this to trigger type errors on incomplete change.
+const channelView = 'channelView';
+const channelTags = 'channelTags';
+const bpassLower = 'bpassLower';
+const bpassUpper = 'bpassUpper';
 
 type S = {
     channelView: string;
@@ -32,30 +38,28 @@ export class HigherLevelOptions extends React.Component<P, S> {
         switch (type) {
             case 'TAGS':
                 Actions.CHANNEL_TAGS_SET(this.state.channelTags);
-
-                return;
+                return this.setState({ channelTags: '' });
             case 'VIEW':
                 Actions.CHANNEL_VIEW_SET(this.state.channelView);
-
-                return;
+                return this.setState({ channelView: '' });
             case 'BPASS':
                 Actions.BANDPASS_SET({
                     freqStart: Number(this.state.bpassLower),
                     freqEnd: Number(this.state.bpassUpper)
                 });
 
-                return;
+                return this.setState({ bpassLower: '', bpassUpper: '' });
         }
     }
 
     render() {
-        const { bpassLower: bpassLower, bpassUpper: bpassUpper, channelTags: channelTags, channelView: channelView } = this.state;
+        const s = this.state;
         return <div id="higher-level">
             {/* Set channel view */}
             <div>
                 <TextField
-                    name="chanTags"
-                    value={channelTags}
+                    name={channelTags}
+                    value={s[channelTags]}
                     onChange={this.handleInputChange}
                     label="Set Channel View"
                     placeholder="Format: 0,1,2,5,6,7,etc"
@@ -73,8 +77,8 @@ export class HigherLevelOptions extends React.Component<P, S> {
             {/* Set tags */}
             <div>
                 <TextField
-                    name="chanView"
-                    value={channelView}
+                    name={channelView}
+                    value={s[channelView]}
                     onChange={this.handleInputChange}
                     label="Set Channel View"
                     placeholder="Format: 0:Fp1;2:Fz;6:P6:0,1,2;etc"
@@ -92,16 +96,16 @@ export class HigherLevelOptions extends React.Component<P, S> {
             {/* Set bandpass */}
             <div>
                 <TextField
-                    name="bapLower"
-                    value={bpassLower}
+                    name={bpassLower}
+                    value={s[bpassLower]}
                     onChange={this.handleInputChange}
                     type="number"
                     label="Bandpass Lower"
                     variant="outlined"
                 />
                 <TextField
-                    name="bapUpper"
-                    value={bpassUpper}
+                    name={bpassUpper}
+                    value={s[bpassUpper]}
                     onChange={this.handleInputChange}
                     type="number"
                     label="Bandpass Upper"

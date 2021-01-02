@@ -5,7 +5,7 @@ import {
 import { Dict, isType } from '@giveback007/util-lib';
 import { createBrowserHistory } from "history";
 import type { NavButton } from "src/components/Navbar/Navbar";
-import type { Actions } from "./actions/index.actions";
+import type { ActionTypes } from "./actions/index.actions";
 import { navLeftLinks, navRightLinks } from "./nav-bar-links";
 
 export type State = {
@@ -57,7 +57,7 @@ const initState: State = {
 }
 
 
-class AppStateManager extends StateManager<State, Actions> {
+class AppStateManager extends StateManager<State, ActionTypes> {
 
     constructor() {
         super(initState);
