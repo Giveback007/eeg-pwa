@@ -39,13 +39,13 @@ export class ObjectListener {
     onchange(newCallback=null,name=null){
         if(name === null) {
             this.listeners.forEach((obj,i) => {
-                obj.onchange = newCallback;
+                obj.listener.onchange = newCallback;
             });
         }
         else {
             var found = this.listeners.find((o,i) => {
-                if(o.name === name){
-                    o.onchange = newCallback;
+                if(o.name === name) {
+                    o.listener.onchange = newCallback;
                 }
             });
         }
@@ -59,7 +59,7 @@ export class ObjectListener {
         }
         else {
             var found = this.listeners.find((o,i) => {
-                if(o.name === name){
+                if(o.name === name) {
                     o.listener.stop();
                 }
             });
@@ -74,7 +74,7 @@ export class ObjectListener {
         }
         else {
             var found = this.listeners.find((o,i) => {
-                if(o.name === name){
+                if(o.name === name) {
                     o.listener.start();
                 }
             });
