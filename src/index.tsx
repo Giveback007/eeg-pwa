@@ -29,24 +29,24 @@ import { browserHist } from './data/store';
 import Dashboard from './views/Dashboard';
 import Navbar from 'src/components/Navbar/Navbar';
 import Settings from './views/Settings';
+import { runEegInitializer } from './data/eeg-initializer';
 
 !(async function() { // workaround to work with quokka.js
     if (!g.env) (window as any).env = (await import('./env')).env.MODE;
     ReactDOM.render(<>
-        <Navbar
-            brand="Web-BCI"
-            // rightMenuBtns={leftLinks}
-            // topMenuBtns={rightLinks}
-        />
-        <Router history={browserHist}>
-            <Switch>
-                <Route path="/dashboard" component={Dashboard} />
-                <Route path="/settings" component={Settings} />
-                <Redirect from="/" to="/dashboard" />
-            </Switch>
-        </Router></>,
+            <Navbar brand="Web-BCI" />
+            <Router history={browserHist}>
+                <Switch>
+                    <Route path="/dashboard" component={Dashboard} />
+                    <Route path="/settings" component={Settings} />
+                    <Redirect from="/" to="/dashboard" />
+                </Switch>
+            </Router>
+        </>,
         document.getElementById('root')
     );
+
+    runEegInitializer();
 })();
 
 
