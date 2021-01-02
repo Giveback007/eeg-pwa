@@ -35,7 +35,7 @@ export class SmoothieApplet extends Applet<S,M> {
     node: HTMLElement;
     storeSub: any;
 
-    constructor(props, state) {
+    constructor(props:any) {
         super(props, (s) => {});
 
         this.parentNode = props.parentNode;
@@ -53,15 +53,6 @@ export class SmoothieApplet extends Applet<S,M> {
 
         this.init();
 
-    }
-
-    onAction(a) {
-        a.type
-        'CHANGE_SOMETHING'
-    }
-
-    onRender(props: P, state: S, prevProps: P, prevState: S) {
-        // update component here
     }
 
     onUpdate() {
