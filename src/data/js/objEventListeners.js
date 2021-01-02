@@ -1,5 +1,6 @@
 
 /*
+//Example:
 let events = new ObjectListener();
 let x = { y: 1, z: { w: 2 }}
 
@@ -35,6 +36,21 @@ export class ObjectListener {
         this.listeners.push(listener);
     }
 
+    onchange(newCallback=null,name=null){
+        if(name === null) {
+            this.listeners.forEach((obj,i) => {
+                obj.onchange = newCallback;
+            });
+        }
+        else {
+            var found = this.listeners.find((o,i) => {
+                if(o.name === name){
+                    o.onchange = newCallback;
+                }
+            });
+        }
+    }
+
     stop(name=null) {
         if(name === null) {
             this.listeners.forEach((obj,i) => {
@@ -44,7 +60,7 @@ export class ObjectListener {
         else {
             var found = this.listeners.find((o,i) => {
                 if(o.name === name){
-                    obj.listener.stop();
+                    o.listener.stop();
                 }
             });
         }
@@ -59,7 +75,7 @@ export class ObjectListener {
         else {
             var found = this.listeners.find((o,i) => {
                 if(o.name === name){
-                    obj.listener.start();
+                    o.listener.start();
                 }
             });
         }
