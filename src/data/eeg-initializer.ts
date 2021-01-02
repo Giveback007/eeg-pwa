@@ -1,8 +1,8 @@
 import { wait } from '@giveback007/util-lib';
 import { eegConnectNavBtn, eegDisconnectNavBtn } from './nav-bar-links';
 import { store } from './store';
-import { eeg32, eegAtlas } from './eeg32';
-import { WorkerUtil } from './workerUtil';
+import { eeg32, eegAtlas } from './js/eeg32';
+import { WorkerUtil } from './js/workerUtil';
 import { Actions } from './actions/index.actions';
 
 export type Channel = {
