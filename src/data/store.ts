@@ -54,8 +54,7 @@ const initState: State = {
     nSecAdcGraph: 10,
     fdBackMode: "coherence",
     analyze: false,
-    rawFeed: false,
-    bandPassWindow: [],
+    rawFeed: false
 }
 
 

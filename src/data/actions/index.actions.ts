@@ -1,28 +1,28 @@
 import { store } from "../store";
 const a = <T>(x: T): T => store.action(x as any);
 
-export const Acts = {
-    ChannelViewSet: (data: string) => a({
-        type: 'CHANNEL_VIEW_SET', data,
+export const Actions = {
+    CHANNEL_VIEW_SET: (data: string) => a({
+        type: 'CHANNEL_VIEW_SET', data
     } as const),
 
-    ChannelTagsSet: (data: string) => a({
-        type: 'CHANNEL_TAGS_SET', data,
+    CHANNEL_TAGS_SET: (data: string) => a({
+        type: 'CHANNEL_TAGS_SET', data
     } as const),
 
-    BandpassSet: (data: { lower: number, upper: number }) => a({
+    BANDPASS_SET: (data: { freqStart: number, freqEnd: number }) => a({
         type: 'BANDPASS_SET', data
     } as const),
 
-    WorkerCoherence: (data: {
-        posFFTList: number[], coherenceResults: number[]
-    }) => a({ type: 'WORKER_COHERENCE', data } as const),
+    WORKER_COHERENCE: () => a({
+        type:'WORKER_COHERENCE'
+    }),
 
-    EegConnect: () => a({ type: "EEG_CONNECT" } as const),
+    EEG_CONNECT: () => a({ type: "EEG_CONNECT" } as const),
 
-    EegDisconnect: () => a({ type: "EEG_DISCONNECT" } as const),
+    EEG_DISCONNECT: () => a({ type: "EEG_DISCONNECT" } as const),
 }
 
 export type Actions = ReturnType<
-    typeof Acts[keyof typeof Acts]
+    typeof Actions[keyof typeof Actions]
 >;

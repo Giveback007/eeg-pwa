@@ -3,7 +3,7 @@ import { eegConnectNavBtn, eegDisconnectNavBtn } from './nav-bar-links';
 import { store } from './store';
 import { eeg32, eegAtlas } from './eeg32';
 import { WorkerUtil } from './workerUtil';
-import { Acts } from './actions/index.actions';
+import { Actions } from './actions/index.actions';
 
 export type Channel = {
     ch: number;
@@ -24,30 +24,26 @@ export const eegConnection = new eeg32(undefined,() => {
 const receivedMsg = (msg: { foo: string, output: any[] }) => {
     if (msg.foo === "coherence") {
 
-        Acts.WorkerCoherence({
-            posFFTList: [...msg.output[1]],
-            coherenceResults: [...msg.output[2]]
-        });
+      var posFFTList = [...msg.output[1]]; //Positive FFT array of arrays
+      var coherenceResults = [...msg.output[2]];
 
-        //
-        // store.setState({
-        //     posFFTList : fftData,
-        //     coherenceResults: coherenceData
-        // });
-
-        // var lastPostTime = store.getState().lastPostTime;
-
-        // eegConnection.channelTags.forEach((row: any,i: any) => {
-        //     if((row.tag !== null) && (i < eegConnection.nChannels)){
-        //         //console.log(tag);
-        //         atlas.mapFFTData(fftData, lastPostTime, i, row.tag);
-        //     }
-        // });
-
-        // atlas.mapCoherenceData(coherenceData, lastPostTime);
+      store.setState({
+        posFFTList:posFFTList,
+        coherenceResults:coherenceResults
+      });
 
 
-        // Acts.WorkerDone(msg);
+      eegConnection.channelTags.forEach((row: any, i: any) => {
+        if(row.tag !== null && i < eegConnection.nChannels){
+            //console.log(tag);
+            atlas.mapFFTData(posFFTList, s.lastPostTime, i, row.tag);
+          }
+      });
+
+      atlas.mapCoherenceData(coherenceResults, s.lastPostTime);
+
+
+      Actions.WORKER_COHERENCE();
     }
 }
 
@@ -66,31 +62,18 @@ atlas.coherenceMap.shared.bandFreqs = atlas.fftMap.shared.bandFreqs;
 
 
 store.actionSub('WORKER_COHERENCE', (a) => {
-    store.setState({
-        ...a.data,
-        lastPostTime: eegConnection.data.ms[eegConnection.data.ms.length-1]
-    });
+  const s = store.getState();
 
-    const s = store.getState();
-    const { coherenceResults, posFFTList } = a.data;
+  if(s.fdBackMode === 'coherence') {
+      store.setState({lastPostTime:eegConnection.data.ms[eegConnection.data.ms.length-1]})
+      workers.postToWorker({foo:'coherence', input:[bufferEEGData(), s.nSec, s.freqStart, s.freqEnd, eegConnection.scalar]});
+  }
 
-    eegConnection.channelTags.forEach((row: any, i: any) => {
-        if(row.tag !== null && i < eegConnection.nChannels){
-            //console.log(tag);
-            atlas.mapFFTData(posFFTList, s.lastPostTime, i, row.tag);
-        }
-    });
-
-    atlas.mapCoherenceData(coherenceResults, s.lastPostTime);
-
-
-    if(s.fdBackMode === 'coherence') {
-        workers.postToWorker({foo:'coherence', input:[bufferData(), s.nSec, s.freqStart, s.freqEnd, eegConnection.scalar]});
-    }
 });
 
 store.actionSub('CHANNEL_VIEW_SET', (a) => {
-    var val = document.getElementById("channelView").value; //s.channelView
+    var val =  a.data; //s.channelView
+
     if(val.length === 0) { return; }
 
     var arr = val.split(",");
@@ -124,7 +107,8 @@ store.actionSub('CHANNEL_VIEW_SET', (a) => {
 });
 
 store.actionSub('CHANNEL_TAGS_SET', (a) => {
-    var val = document.getElementById("channelTags").value; //s.channelTags
+    var val = a.data; //s.channelTags
+
     if(val.length === 0) { return; }
     //console.log(val);
     var arr = val.split(";");
@@ -210,7 +194,7 @@ store.actionSub('CHANNEL_TAGS_SET', (a) => {
 
 //Sub action for setting the bandpass filter to update the bandpass
 store.actionSub('BANDPASS_SET', (a) => {
-
+  updateBandPass(a.data.freqStart,a.data.freqEnd);
 });
 
 store.actionSub(['EEG_CONNECT', 'EEG_DISCONNECT'], async (a) => {
@@ -254,14 +238,13 @@ function bufferEEGData() {
 }
 
 function updateBandPass(freqStart, freqEnd) {
-    var s = store.getState();
     var freq0 = freqStart; var freq1 = freqEnd;
     if (freq0 > freq1) {
         freq0 = 0;
     }
     if(freq1 > eegConnection.sps*0.5){
         freq1 = eegConnection.sps*0.5;
-        document.getElementById("freqEnd").value = freq1;
+        store.setState({freqEnd:freq1});
     }
 
     atlas.fftMap = atlas.makeAtlas10_20(); //reset atlas

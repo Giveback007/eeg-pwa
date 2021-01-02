@@ -1,14 +1,14 @@
 import { Button } from '@material-ui/core';
 import { TextField } from '@material-ui/core';
 import React, { ChangeEvent, ChangeEventHandler, MouseEvent } from 'react';
-import { Acts } from 'src/data/actions/index.actions';
+import { Actions } from 'src/data/actions/index.actions';
 import { icons } from '../icons';
 
 type S = {
-    chanView: string;
-    chanTags: string;
-    bapLower: string;
-    bapUpper: string
+    channelView: string;
+    channelTags: string;
+    bpassLower: string;
+    bpassUpper: string
 }
 
 type P = {
@@ -17,10 +17,10 @@ type P = {
 
 export class HigherLevelOptions extends React.Component<P, S> {
     state: S = {
-        chanView: '',
-        chanTags: '',
-        bapLower: '',
-        bapUpper: '',
+        channelView: '',
+        channelTags: '',
+        bpassLower: '',
+        bpassUpper: '',
     };
 
     handleInputChange = (e: ChangeEvent<HTMLInputElement>) => {
@@ -28,34 +28,34 @@ export class HigherLevelOptions extends React.Component<P, S> {
         this.setState({ [name]: value } as any)
     }
 
-    handleButtonClick = (type: 'TAGS' | 'VIEW' | 'BAPS') => {
+    handleButtonClick = (type: 'TAGS' | 'VIEW' | 'BPASS') => {
         switch (type) {
             case 'TAGS':
-                Acts.ChannelTagsSet(this.state.chanTags);
+                Actions.CHANNEL_TAGS_SET(this.state.channelTags);
 
-                return this.setState({ chanTags: ''});
+                return;
             case 'VIEW':
-                Acts.ChannelViewSet(this.state.chanView);
+                Actions.CHANNEL_VIEW_SET(this.state.channelView);
 
-                return this.setState({ chanView: '' });
-            case 'BAPS':
-                Acts.BandpassSet({
-                    lower: Number(this.state.bapLower),
-                    upper: Number(this.state.bapUpper)
+                return;
+            case 'BPASS':
+                Actions.BANDPASS_SET({
+                    freqStart: Number(this.state.bpassLower),
+                    freqEnd: Number(this.state.bpassUpper)
                 });
 
-                return this.setState({ bapLower: '', bapUpper: '' })
+                return;
         }
     }
 
     render() {
-        const { bapLower, bapUpper, chanTags, chanView } = this.state;
+        const { bpassLower: bpassLower, bpassUpper: bpassUpper, channelTags: channelTags, channelView: channelView } = this.state;
         return <div id="higher-level">
             {/* Set channel view */}
             <div>
                 <TextField
                     name="chanTags"
-                    value={chanTags}
+                    value={channelTags}
                     onChange={this.handleInputChange}
                     label="Set Channel View"
                     placeholder="Format: 0,1,2,5,6,7,etc"
@@ -74,7 +74,7 @@ export class HigherLevelOptions extends React.Component<P, S> {
             <div>
                 <TextField
                     name="chanView"
-                    value={chanView}
+                    value={channelView}
                     onChange={this.handleInputChange}
                     label="Set Channel View"
                     placeholder="Format: 0:Fp1;2:Fz;6:P6:0,1,2;etc"
@@ -93,7 +93,7 @@ export class HigherLevelOptions extends React.Component<P, S> {
             <div>
                 <TextField
                     name="bapLower"
-                    value={bapLower}
+                    value={bpassLower}
                     onChange={this.handleInputChange}
                     type="number"
                     label="Bandpass Lower"
@@ -101,7 +101,7 @@ export class HigherLevelOptions extends React.Component<P, S> {
                 />
                 <TextField
                     name="bapUpper"
-                    value={bapUpper}
+                    value={bpassUpper}
                     onChange={this.handleInputChange}
                     type="number"
                     label="Bandpass Upper"
@@ -112,7 +112,7 @@ export class HigherLevelOptions extends React.Component<P, S> {
                     color="primary"
                     // className={classes.button}
                     startIcon={<icons.AddCircle />}
-                    onClick={() => this.handleButtonClick('BAPS')}
+                    onClick={() => this.handleButtonClick('BPASS')}
                 >Set</Button>
             </div>
         </div>
