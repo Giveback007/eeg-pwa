@@ -17,8 +17,8 @@ var defaultTags = [
 ];
 
 export const atlas = new eegAtlas(defaultTags);
-export const eegConnection = new eeg32(() => {
-    store.setEegData(eegConnection.data); // Throttled updating
+export const eegConnection = new eeg32(undefined,() => {
+    runEEGWorker();
 }); //onDecoded callback to set state on front end.
 
 const receivedMsg = (msg: { foo: string, output: any[] }) => {
@@ -89,12 +89,123 @@ store.actionSub('WORKER_COHERENCE', (a) => {
     }
 });
 
-store.stateSub('posFFTList', (s) => {
-    //on posFFTList update: atlas.mapFFTData(s.posFFTList,s.lastPostTime)
+store.actionSub('CHANNEL_VIEW_SET', (a) => {
+    var val = document.getElementById("channelView").value; //s.channelView
+    if(val.length === 0) { return; }
+
+    var arr = val.split(",");
+    atlas.channelTags.forEach((row,j) => { atlas.channelTags[j].viewing = false; });
+    var newSeries = [{}];
+
+    arr.forEach((item,i) => {
+        var found = false;
+        let getTags = atlas.channelTags.find((o, j) => {
+
+        if((o.ch === parseInt(item)) || (o.tag === item)){
+        //console.log(item);
+        atlas.channelTags[j].viewing = true;
+        found = true;
+        return true;
+        }
+        });
+
+
+        if (found === false){ //add tag
+        if(parseInt(item) !== NaN){
+            atlas.channelTags.push({ch:parseInt(item), tag: null, viewing:true});
+        }
+        else {
+            alert("Tag not assigned to channel: ", item);
+        }
+        }
+    });
+
+    //setuPlot();
 });
 
-store.stateSub('coherenceResults', (s) => {
-    //on coherenceResults update: atlas.mapCoherenceData(s.coherenceResults)
+store.actionSub('CHANNEL_TAGS_SET', (a) => {
+    var val = document.getElementById("channelTags").value; //s.channelTags
+    if(val.length === 0) { return; }
+    //console.log(val);
+    var arr = val.split(";");
+    //console.log(arr);
+    //channelTags.forEach((row,j) => { channelTags[j].viewing = false; });
+    //console.log(arr);
+    arr.forEach((item,i) => {
+      var dict = item.split(":");
+      var found = false;
+      let setTags = atlas.channelTags.find((o, j) => {
+        if(o.ch === parseInt(dict[0])){
+          if(dict[1] === "delete"){
+            atlas.channelTags.splice(j,1);
+          }
+          else{
+            let otherTags = atlas.channelTags.find((p,k) => {
+              if(p.tag === dict[1]){
+                atlas.channelTags[k].tag = null;
+                return true;
+              }
+            });
+
+            //console.log(o);
+            atlas.channelTags[j].tag = dict[1];
+            atlas.channelTags[j].viewing = true;
+
+            if(dict[2] !== undefined){
+              var atlasfound = false;
+              var searchatlas = atlas.fftMap.map.find((p,k) => {
+                if(p.tag === dict[1]){
+                  atlasfound = true;
+                  return true;
+                }
+              });
+              if(atlasfound !== true) {
+                var coords = dict[2].split(",");
+                if(coords.length === 3){
+                    atlas.addToAtlas(dict[1],parseFloat(coords[0]),parseFloat(coords[1]),parseFloat(coords[2]))
+                }
+              }
+            }
+          }
+          found = true;
+          return true;
+          }
+        else if(o.tag === dict[1]){
+            atlas.channelTags[j].tag = null; //Set tag to null since it's being assigned to another channel
+        }
+      });
+      if (found === false){
+        var ch = parseInt(dict[0]);
+        if(ch !== NaN) {
+          if((ch >= 0) && (ch < EEG.nChannels)){
+            atlas.channelTags.push({ch:parseInt(ch), tag: dict[1], viewing: true});
+
+            if(dict[2] !== undefined){
+              var atlasfound = false;
+              var searchatlas = atlas.fftMap.map.find((p,k) => {
+                if(p.tag === dict[1]){
+                  atlasfound = true;
+                  return true;
+                }
+              });
+              if(atlasfound !== true) {
+                var coords = dict[2].split(",");
+                if(coords.length === 3){
+                  atlas.addToAtlas(dict[1],parseFloat(coords[0]),parseFloat(coords[1]),parseFloat(coords[2]))
+                }
+              }
+            }
+          }
+        }
+      }
+    });
+
+    atlas.coherenceMap = atlas.genCoherenceMap(atlas.channelTags); //Reset coherence map with new tags
+    atlas.coherenceMap.shared.bandPassWindow = atlas.fftMap.shared.bandPassWindow;
+    atlas.coherenceMap.shared.bandFreqs = atlas.atlas.shared.bandFreqs;
+
+    //setBrainMap();
+    //setuPlot();
 });
 
 //Sub action for setting the bandpass filter to update the bandpass
@@ -121,7 +232,15 @@ store.actionSub(['EEG_CONNECT', 'EEG_DISCONNECT'], async (a) => {
     }
 });
 
-function bufferData() {
+function runEEGWorker() {
+    var s = store.getState();
+    store.setState({["lastPostTime"]: eegConnection.data.ms[eegConnection.data.ms.length-1]});
+    if(s.fdBackMode === 'coherence') {
+        workers.postToWorker({foo:'coherence', input:[bufferEEGData(), s.nSec, s.freqStart, s.freqEnd, eegConnection.scalar]});
+    }
+}
+
+function bufferEEGData() {
     var buffer = [];
     for(var i = 0; i < atlas.channelTags.length; i++){
         if(i < eegConnection.nChannels) {
@@ -135,7 +254,7 @@ function bufferData() {
 }
 
 function updateBandPass(freqStart, freqEnd) {
-
+    var s = store.getState();
     var freq0 = freqStart; var freq1 = freqEnd;
     if (freq0 > freq1) {
         freq0 = 0;

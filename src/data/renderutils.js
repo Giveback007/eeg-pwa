@@ -1,83 +1,5 @@
 //Utilities for CPU-side render prep. Contains graphnodes and projection matrices. For super optimal matrix math use glMatrix (https://github.com/toji/gl-matrix)
 
-export class graphNode { //Use this to organize 3D models hierarchically if needed
-    constructor(parent=null, children=[null], id=null) {
-        this.id = id;
-        this.parent = parent; //Access/inherit parent object
-        this.children = children; //List of child objects for this node, each with independent data
-        this.globalPos = {x:0,y:0,z:0}; //Global x,y,z position
-        this.localPos = {x:0,y:0,z:0};  //Local x,y,z position offset. Render as global + local pos
-        this.globalRot = {x:0,y:0,z:0}; //Global x,y,z rotation (rads)
-        this.localRot = {x:0,y:0,z:0}; //Local x,y,z rotation (rads). Render as global + local rot
-        this.functions = []; // List of functions. E.g. function foo(x) {return x;}; this.functions["foo"] = foo; this.functions.foo = foo(x) {return x;}. Got it?
-
-        //3D Rendering stuff
-        this.model = null; //
-        this.mesh = [[0,0,0],[1,1,1],[1,0,0],[0,0,0]]; // Model vertex list, array of vec3's xyz, so push x,y,z components. For ThreeJS use THREE.Mesh(vertices, material) to generate a model from this list with the selected material
-        this.colors = [[0,0,0],[255,255,255],[255,0,0],[0,0,0]]; // Vertex color list, array of vec3's rgb or vec4's rgba for outside of ThreeJS. For ThreeJS use THREE.Color("rgb(r,g,b)") for each array item.
-        this.materials = []; // Array of materials maps i.e. lighting properties and texture maps.
-        this.textures = []; // Array of texture image files.
-
-        if(parent !== null){
-            this.inherit(parent);
-        }
-    }
-
-    inherit(parent) { //Sets globals to be equal to parent info and adds parent functions to this node.
-        this.parent = parent;
-        this.globalPos = parent.globalPos;
-        this.globalRot = parent.globalRot;
-        this.functions.concat(parent.functions);
-        this.children.forEach((child)=>{
-            child.globalPos = parent.global;
-            child.functions.concat(parent.functions);
-        });
-    }
-
-    addChild(child){ //Add child node reference
-        this.children.push(child); //Remember: JS is all pass by object reference.
-    }
-
-    removeChild(id){ //Remove child node reference
-        this.children.forEach((child, idx)=>{
-            if(child.id == id){
-                this.children.splice(idx,1);
-            }
-        });
-    }
-
-    translate(offset=[0,0,0]){ //Recursive global translation of this node and all children
-        this.globalPos=[this.globalPos.x+offset[0],this.globalPos.y+offset[1],this.globalPos.z+offset[2]];
-        this.children.forEach((child)=>{
-            child.translate(offset);
-        });
-    }
-
-    setGlobalRotation(offset=[0,0,0]){ //Offsets the global rotation of this node and all child nodes (radian)
-        this.globalRot.x+=offset[0];
-        this.globalRot.y+=offset[1];
-        this.globalRot.z+=offset[2];
-        this.children.forEach((child)=>{
-            child.setGlobalRotation(offset);
-        });
-    }
-
-    getGlobalMesh() { //Get mesh with rotation and translation applied
-        var globalmeshvertices = [];
-        var rotated = Math3D.rotateMesh(this.mesh,this.globalRot.x+this.localRot.x,this.globalRot.y+this.localRot.y,this.globalRot.z+this.localRot.z);
-        for(var i = 0; i < this.mesh.length; i++){
-            globalmeshvertices.push([
-                rotated[i][0]+this.globalPos.x+this.localPos.x,
-                rotated[i][1]+this.globalPos.y+this.localPos.y,
-                rotated[i][2]+this.globalPos.z+this.localPos.z
-            ]);
-        }
-
-        return globalmeshvertices;
-    }
-
-}
-
 
 export class matrix2D { //some functions for 2d matrix work
     constructor(){
@@ -199,7 +121,7 @@ export class Math3D { //some stuff for doing math in 3D
         return result;
     }
 
-    makeIdentityM4(x,y,z,w) {
+    static makeIdentityM4() {
         return [
             [1,0,0,0],
             [0,1,0,0],
@@ -208,7 +130,7 @@ export class Math3D { //some stuff for doing math in 3D
         ];
     }
 
-    makeTranslationM4(tx,ty,tz){
+    static makeTranslationM4(tx,ty,tz){
         return [
             [1,   0,  0, 0],
             [0,   1,  0, 0],
@@ -217,13 +139,13 @@ export class Math3D { //some stuff for doing math in 3D
         ];
     }
 
-    translateM4(mat4, tx, ty, tz) {
+    static translateM4(mat4, tx, ty, tz) {
         var translate = this.makeTranslationM4(tx,ty,tz)
 
         return matrix2D.mul(mat4, translate);
     }
 
-    makeScaleM4(scaleX,scaleY,scaleZ){
+    static makeScaleM4(scaleX,scaleY,scaleZ){
         return [
             [scaleX, 0, 0, 0],
             [0, scaleY, 0, 0],
@@ -233,13 +155,13 @@ export class Math3D { //some stuff for doing math in 3D
 
     }
 
-    scaleM4(mat4,scaleX,scaleY,scaleZ){
+    static scaleM4(mat4,scaleX,scaleY,scaleZ){
         var scale = this.makeScaleM4(scaleX,scaleY,scaleZ);
         return matrix2D.multiply(mat4, scale);
     }
 
 
-    xRotationM4(angleInRadians) {
+    static xRotationM4(angleInRadians) {
         var c = Math.cos(angleInRadians);
         var s = Math.sin(angleInRadians);
 
@@ -251,7 +173,7 @@ export class Math3D { //some stuff for doing math in 3D
         ];
     }
 
-    yRotationM4(angleInRadians) {
+    static yRotationM4(angleInRadians) {
         var c = Math.cos(angleInRadians);
         var s = Math.sin(angleInRadians);
 
@@ -263,7 +185,7 @@ export class Math3D { //some stuff for doing math in 3D
         ];
     }
 
-    zRotationM4(angleInRadians) {
+    staticzRotationM4(angleInRadians) {
         var c = Math.cos(angleInRadians);
         var s = Math.sin(angleInRadians);
 
@@ -276,7 +198,7 @@ export class Math3D { //some stuff for doing math in 3D
     }
 
     //Rotate a 4D matrix
-    rotateM4(mat4, anglex, angley, anglez) {
+    static rotateM4(mat4, anglex, angley, anglez) {
         var result = [...mat4];
         if(anglex !== 0){
             result = matrix2D.mul(result,this.xRotationM4(anglex));
@@ -291,7 +213,7 @@ export class Math3D { //some stuff for doing math in 3D
         return result;
     }
 
-    rotatePoint1AboutPoint2(p1,p2,anglex,angley,anglez) {
+    static rotatePoint1AboutPoint2(p1,p2,anglex,angley,anglez) {
         let rotatedM4 =
             matrix2D.mul(
                 this.translateM4(
@@ -306,7 +228,7 @@ export class Math3D { //some stuff for doing math in 3D
     }
 
     //4D matrix inversion
-    invertM4(mat4) {
+    static invertM4(mat4) {
         var m = mat4;
         var inv = [...mat4];
         inv[0][0] = m[1][1]  * m[2][2]* m[3][3] -
@@ -426,8 +348,8 @@ export class Math3D { //some stuff for doing math in 3D
 
     //Fairly efficient nearest neighbor search. Supply list of coordinates (array of Array(3)) and maximum radius to be considered a neighbor.
     //Returns a list of nodes with [{idx:0,neighbors:[{idx:j,position:[x,y,z],dist:d}]},{...},...]. Neighbors are auto sorted by distance.
-    //Current complexity: (n+1)/2, there are faster ways to do it but this should be good enough
-    nearestNeighborSearch(positions, isWithinRadius) {
+    //Current complexity: n(n+1)/2, there are faster ways to do it but this should be good enough
+    static nearestNeighborSearch(positions, isWithinRadius) {
 
         let node = {
             idx: null,
@@ -475,8 +397,90 @@ export class Math3D { //some stuff for doing math in 3D
 }
 
 
-export class camera { //pinhole camera model
+
+
+export class graphNode { //Use this to organize 3D models hierarchically if needed
+    constructor(parent=null, children=[null], id=null) {
+        this.id = id;
+        this.parent = parent; //Access/inherit parent object
+        this.children = children; //List of child objects for this node, each with independent data
+        this.globalPos = {x:0,y:0,z:0}; //Global x,y,z position
+        this.localPos = {x:0,y:0,z:0};  //Local x,y,z position offset. Render as global + local pos
+        this.globalRot = {x:0,y:0,z:0}; //Global x,y,z rotation (rads)
+        this.localRot = {x:0,y:0,z:0}; //Local x,y,z rotation (rads). Render as global + local rot
+        this.functions = []; // List of functions. E.g. function foo(x) {return x;}; this.functions["foo"] = foo; this.functions.foo = foo(x) {return x;}. Got it?
+
+        //3D Rendering stuff
+        this.model = null; //
+        this.mesh = [[0,0,0],[1,1,1],[1,0,0],[0,0,0]]; // Model vertex list, array of vec3's xyz, so push x,y,z components. For ThreeJS use THREE.Mesh(vertices, material) to generate a model from this list with the selected material
+        this.colors = [[0,0,0],[255,255,255],[255,0,0],[0,0,0]]; // Vertex color list, array of vec3's rgb or vec4's rgba for outside of ThreeJS. For ThreeJS use THREE.Color("rgb(r,g,b)") for each array item.
+        this.materials = []; // Array of materials maps i.e. lighting properties and texture maps.
+        this.textures = []; // Array of texture image files.
+
+        if(parent !== null){
+            this.inherit(parent);
+        }
+    }
+
+    inherit(parent) { //Sets globals to be equal to parent info and adds parent functions to this node.
+        this.parent = parent;
+        this.globalPos = parent.globalPos;
+        this.globalRot = parent.globalRot;
+        this.functions.concat(parent.functions);
+        this.children.forEach((child)=>{
+            child.globalPos = parent.global;
+            child.functions.concat(parent.functions);
+        });
+    }
+
+    addChild(child){ //Add child node reference
+        this.children.push(child); //Remember: JS is all pass by object reference.
+    }
+
+    removeChild(id){ //Remove child node reference
+        this.children.forEach((child, idx)=>{
+            if(child.id == id){
+                this.children.splice(idx,1);
+            }
+        });
+    }
+
+    translate(offset=[0,0,0]){ //Recursive global translation of this node and all children
+        this.globalPos=[this.globalPos.x+offset[0],this.globalPos.y+offset[1],this.globalPos.z+offset[2]];
+        this.children.forEach((child)=>{
+            child.translate(offset);
+        });
+    }
+
+    setGlobalRotation(offset=[0,0,0]){ //Offsets the global rotation of this node and all child nodes (radian)
+        this.globalRot.x+=offset[0];
+        this.globalRot.y+=offset[1];
+        this.globalRot.z+=offset[2];
+        this.children.forEach((child)=>{
+            child.setGlobalRotation(offset);
+        });
+    }
+
+    getGlobalMesh() { //Get mesh with rotation and translation applied
+        var globalmeshvertices = [];
+        var rotated = Math3D.rotateMesh(this.mesh,this.globalRot.x+this.localRot.x,this.globalRot.y+this.localRot.y,this.globalRot.z+this.localRot.z);
+        for(var i = 0; i < this.mesh.length; i++){
+            globalmeshvertices.push([
+                rotated[i][0]+this.globalPos.x+this.localPos.x,
+                rotated[i][1]+this.globalPos.y+this.localPos.y,
+                rotated[i][2]+this.globalPos.z+this.localPos.z
+            ]);
+        }
+
+        return globalmeshvertices;
+    }
+
+}
+
+
+export class camera { //pinhole camera model. Use to set your 3D rendering view model
     constructor (position={x:0,y:0,z:0},rotation={x:0,y:0,z:0},fov=90,aspect=1,near=0,far=1,fx=1,fy=1,cx=0,cy=0) {
+
         this.position = position;
         this.rotation = rotation;
         this.fov = fov;
@@ -494,12 +498,10 @@ export class camera { //pinhole camera model
         this.cx = cx;
         this.cy = cy;
 
+        this.cameraMat = this.getViewProjectionMatrix();
 
         /*
-        To use:
-        create class and set parameters,
-        do this.getViewProjectionMatrix()
-        now set the translate of each model uniform relative to the viewprojection result
+
         */
     }
 
@@ -535,13 +537,41 @@ export class camera { //pinhole camera model
     }
 
     getViewProjectionMatrix() { //Translate geometry based on this result then set location. Demonstrated: https://webglfundamentals.org/webgl/lessons/webgl-3d-camera.html
-        var cameraMat = this.getCameraMatrix(fx,fy,cx,cy);
+        var cameraMat = this.getCameraMatrix(this.fx,this.fy,this.cx,this.cy);
         cameraMat = Math3D.rotateM4(cameraMat,this.rotation.x,this.rotation.y,this.rotation.z);
         cameraMat = Math3D.translateM4(cameraMat, this.position.x, this.position.y, this.position.z);
         var viewMat = Math3D.invertM4(cameraMat);
         return matrix2D.mul(this.getPerspectiveMatrix(), viewMat); //View projection matrix result
     }
 
+    updateRotation() {
+        this.cameraMat = Math3D.rotateM4(this.cameraMat, this.rotation.x, this.rotation.y, this.rotation.z);
+    }
+
+    updateTranslation() {
+        this.cameraMat = Math3D.translateM4(this.cameraMat, this.position.x, this.position.y, this.position.z);
+    }
+
+    //Rotation in radians
+    rotateCamera(xRot=0,yRot=0,zRot=0) {
+        this.rotation = {x:xRot, y:yRot, z:zRot}
+        this.updateRotation();
+    }
+
+    //Rotation in Radians
+    rotateCameraAboutPoint(xPos=0,yPos=0,zPos=0,xRot,yRot,zRot){
+        var anchorPoint = [xPos,yPos,zPos]
+        var rotatedPosition = Math3D.rotatePoint1AboutPoint2(this.camera.position,anchorPoint,xRot,yRot,zRot);
+        this.position = {x:rotatedPosition[0],y:rotatedPosition[1],z:rotatedPosition[2]};
+        this.updateTranslation();
+        this.rotation = {x:this.rotation.x - xRot, y:this.rotation.y - yRot, z:this.rotation.z - zRot};
+        this.updateRotation();
+    }
+
+    moveCamera(xPos = 0, yPos = 0, zPos = 0) {
+        this.position = {x:xPos, y:yPos, z:zPos};
+        this.updateTranslation();
+    }
 
 }
 
@@ -573,8 +603,8 @@ export class Physics {
             acceleration: [0,0,0],
             forceImpulse: [0,0,0], //Instantaneous force (resets after applying)
 
-            drag: 0,
             mass: 1,
+            drag: 0,
             restitution: 1, //Bounciness
             friction: 0, //Amount this surface slows other objects in contact along the contact plane
 
@@ -588,7 +618,7 @@ export class Physics {
         }
 
         for (let i = 0; i < nBodies; i++) {
-            this.physicsBodies.push(new this.bodyPrim);
+            this.physicsBodies.push(Object.assign({},this.bodyPrim));
             this.physicsBodies[i].index = i;
         }
     }
@@ -596,8 +626,8 @@ export class Physics {
     timeStep(dt) { //dt in seconds
 
         /* //Nearest neighbor search optimization for collision detection (to cut down array searching), can make this only fire every n-milliseconds for speed
-        var neighborNodes = Math3D.nearestNeighborSearch(positions,this.globalSettings.maxDistCheck);
-        neighborNodes.forEach((node,i) => {
+        var neighborTree = Math3D.nearestNeighborSearch(positions,this.globalSettings.maxDistCheck);
+        neighborTree.forEach((node,i) => {
             var body1 = this.physicsBodies[i];
             node.neighbors.forEach((neighbor,j) => {
                 var body2 = this.physicsBodies[j];
@@ -613,11 +643,19 @@ export class Physics {
 
             for(var j = i+1; j < this.physicsBodies.length; j++) {
                 var otherBody = this.physicsBodies[j];
+
+                //Collision Check
                 var isColliding = this.collisionCheck(body,otherBody);
                 if(isColliding === true) {
                     this.resolveCollision(body,otherBody); //Now calculate forces
                     this.resolveCollision(otherBody,body); //Now calculate forces
                 }
+
+                //Gravity check
+                if(body.attractor === true && otherBody.attractor === true) {
+                    this.resolveAttractor(body,otherBody)
+                }
+
             }
 
             //Resolve Attractors
@@ -653,7 +691,8 @@ export class Physics {
         });
     }
 
-    calcVelocity(vOld,a,dt) {
+    // V = Vold*dt + a*dt^2, basic projectile motion equation
+    calcVelocityStep(vOld=[0,0,0],a=[0,0,0],dt) {
         return [
             vOld[0]*dt + a[0]*dt*dt,
             vOld[1]*dt + a[1]*dt*dt,
@@ -661,7 +700,8 @@ export class Physics {
         ];
     }
 
-    calcForce(m, a) {
+    // F = m*a for 3D vecs
+    calcForce(m, a=[0,0,0]) {
         return [
             m*a[0],
             m*a[1],
@@ -669,7 +709,8 @@ export class Physics {
         ];
     }
 
-    calcAccelFromForce(F, m) {
+    // a = F/m for 3D vecs
+    calcAccelFromForce(F=[0,0,0], m=0) {
         return [
             F[0]/m,
             F[1]/m,
@@ -718,6 +759,25 @@ export class Physics {
 
     resolveAttractor(body1,body2) {
         //Gravitational pull of nBodies
+        var dist = Math3D.distance(body1.position,body2.position);
+        var vec1 = Math3D.normalize(Math3D.makeVec(body1.position,body2.position)); // a to b
+        var vec2 = Math3D.normalize(Math3D.makeVec(body2.position,body1.position)); // b to a
+
+        //Newton's law of gravitation
+        var Fg = 0.00000000006674 * body1.mass * body2.mass / (dist*dist);
+
+        //Get force vectors
+        FgOnBody1 = [vec1[0]*Fg,vec1[1]*Fg,vec1[2]*Fg];
+        FgOnBody2 = [vec2[0]*Fg,vec2[1]*Fg,vec2[2]*Fg];
+
+        body1.forceImpulse[0] += FgOnBody1[0];
+        body1.forceImpulse[1] += FgOnBody1[1];
+        body1.forceImpulse[2] += FgOnBody1[2];
+
+        body2.forceImpulse[0] += FgOnBody2[0];
+        body2.forceImpulse[1] += FgOnBody2[1];
+        body2.forceImpulse[2] += FgOnBody2[2];
+
     }
 
     //Checks if two bodies are colliding based on their collision setting
