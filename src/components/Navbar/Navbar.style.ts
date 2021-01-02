@@ -46,7 +46,7 @@ const headerStyle = () => ({
         ...navBtns
     },
     appBarSpacer: {
-        minHeight: appBarHeight,
+        minHeight: appBarHeight + 20,
         padding: `${appBarPadding}px 0`
     },
     appDrawer: {

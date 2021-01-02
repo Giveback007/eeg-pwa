@@ -21,6 +21,8 @@ export const Actions = {
     EEG_CONNECT: () => a({ type: "EEG_CONNECT" } as const),
 
     EEG_DISCONNECT: () => a({ type: "EEG_DISCONNECT" } as const),
+
+    TOP_OPTS_TOGGLE: () => a({ type: 'TOP_OPTS_TOGGLE' } as const),
 }
 
 export type ActionTypes = ReturnType<

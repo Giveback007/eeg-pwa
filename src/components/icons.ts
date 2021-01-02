@@ -9,11 +9,16 @@ import PowerSettings from '@material-ui/icons/PowerSettingsNew';
 import Wifi from '@material-ui/icons/Wifi';
 import WifiOff from '@material-ui/icons/WifiOff';
 import AddCircle from '@material-ui/icons/AddCircle';
+// import ArrowDropDown from '@material-ui/icons/ArrowDropDown';
+// import ArrowDropUp from '@material-ui/icons/ArrowDropUp';
+import Tune from '@material-ui/icons/Tune';
 
 // FIND-ICONS: https://material-ui.com/components/material-icons/
 export const icons = {
     Apps, Menu, Dashboard, ListAlt, Settings, PlayArrow,
-    StopSharp, PowerSettings, Wifi, WifiOff, AddCircle
+    StopSharp, PowerSettings, Wifi, WifiOff, AddCircle,
+    Tune
+    // ArrowDropDown, ArrowDropUp,
 }
 
 export type Icon = keyof typeof icons;

@@ -6,6 +6,7 @@ import { Icon, icons } from '../icons';
 
 import styles from "./Navbar.style";
 import type { Immutable, UrlObj } from '@giveback007/browser-utils';
+import { Actions } from 'src/data/actions/index.actions';
 
 // type S = { };
 type P = {
@@ -84,6 +85,18 @@ function Navbar(props: P) {
                     {navLeftLinks?.map(x => NavBtn(x))}
                 </div>
 
+                <IconButton
+                    color="inherit"
+                    aria-label="open dashboard settings"
+                    className='nav-btn-activatable'
+                    onClick={Actions.TOP_OPTS_TOGGLE}
+                > <icons.Tune /> </IconButton>
+                <IconButton
+                    color="inherit"
+                    aria-label="open dashboard settings"
+                    className='nav-btn-activatable'
+                    style={{ cursor: 'auto', pointerEvents: 'none' }}
+                > | </IconButton>
                 <IconButton
                     color="inherit"
                     aria-label="open drawer"
