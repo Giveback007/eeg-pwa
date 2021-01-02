@@ -1,4 +1,18 @@
 
+/*
+let events = new ObjectListener();
+let x = { y: 1, z: { w: 2 }}
+
+
+events.addListener("y",x,"y");
+events.addListener("z",x,"z");
+
+x.z.w = 3;
+x.y = 2;
+//See console
+
+*/
+
 export class ObjectListener {
     constructor() {
         this.listeners = [];
@@ -214,17 +228,3 @@ export function sortObjectByPropName(object) {
 
 }
 
-
-/*
-let events = new ObjectListener();
-let x = { y: 1, z: { w: 2 }}
-
-
-events.addListener("y",x,"y");
-events.addListener("z",x,"z");
-
-x.z.w = 3;
-x.y = 2;
-//See console
-
-*/
