@@ -1,33 +1,6 @@
 //Utilities for CPU-side render prep. Contains graphnodes and projection matrices. For super optimal matrix math use glMatrix (https://github.com/toji/gl-matrix)
 
 
-export class matrix2D { //some functions for 2d matrix work
-    constructor(){
-
-    }
-
-    static transpose2D(mat2D){
-		return mat2D[0].map((_, colIndex) => mat2.map(row => row[colIndex]));
-    }
-
-    static mul(a, b) { //Multiply two 2D matrices (array of arrays)
-		var aNumRows = a.length, aNumCols = a[0].length,
-			bNumRows = b.length, bNumCols = b[0].length,
-			m = new Array(aNumRows);  // initialize array of rows
-		for (var r = 0; r < aNumRows; ++r) {
-		  m[r] = new Array(bNumCols); // initialize the current row
-		  for (var c = 0; c < bNumCols; ++c) {
-			m[r][c] = 0;             // initialize the current cell
-			for (var i = 0; i < aNumCols; ++i) {
-			  m[r][c] += a[r][i] * b[i][c];
-			}
-		  }
-		}
-		return m;
-    }
-
-}
-
 export class Math3D { //some stuff for doing math in 3D
     constructor() {
 
@@ -121,6 +94,26 @@ export class Math3D { //some stuff for doing math in 3D
         return result;
     }
 
+    static transposeMat2D(mat2D){
+		return mat2D[0].map((_, colIndex) => mat2.map(row => row[colIndex]));
+    }
+
+    static matmul2D(a, b) { //matmul2Dtiply two 2D matrices (array of arrays)
+		var aNumRows = a.length, aNumCols = a[0].length,
+			bNumRows = b.length, bNumCols = b[0].length,
+			m = new Array(aNumRows);  // initialize array of rows
+		for (var r = 0; r < aNumRows; ++r) {
+		  m[r] = new Array(bNumCols); // initialize the current row
+		  for (var c = 0; c < bNumCols; ++c) {
+			m[r][c] = 0;             // initialize the current cell
+			for (var i = 0; i < aNumCols; ++i) {
+			  m[r][c] += a[r][i] * b[i][c];
+			}
+		  }
+		}
+		return m;
+    }
+
     static makeIdentityM4() {
         return [
             [1,0,0,0],
@@ -142,7 +135,7 @@ export class Math3D { //some stuff for doing math in 3D
     static translateM4(mat4, tx, ty, tz) {
         var translate = this.makeTranslationM4(tx,ty,tz)
 
-        return matrix2D.mul(mat4, translate);
+        return Math3D.matmul2D(mat4, translate);
     }
 
     static makeScaleM4(scaleX,scaleY,scaleZ){
@@ -157,7 +150,7 @@ export class Math3D { //some stuff for doing math in 3D
 
     static scaleM4(mat4,scaleX,scaleY,scaleZ){
         var scale = this.makeScaleM4(scaleX,scaleY,scaleZ);
-        return matrix2D.multiply(mat4, scale);
+        return Math3D.matmul2Dtiply(mat4, scale);
     }
 
 
@@ -201,13 +194,13 @@ export class Math3D { //some stuff for doing math in 3D
     static rotateM4(mat4, anglex, angley, anglez) {
         var result = [...mat4];
         if(anglex !== 0){
-            result = matrix2D.mul(result,this.xRotationM4(anglex));
+            result = Math3D.matmul2D(result,this.xRotationM4(anglex));
         }
         if(angley !== 0){
-            result = matrix2D.mul(result,this.yRotationM4(angley));
+            result = Math3D.matmul2D(result,this.yRotationM4(angley));
         }
         if(anglez !== 0){
-            result = matrix2D.mul(result,this.zRotationM4(anglez));
+            result = Math3D.matmul2D(result,this.zRotationM4(anglez));
         }
 
         return result;
@@ -215,7 +208,7 @@ export class Math3D { //some stuff for doing math in 3D
 
     static rotatePoint1AboutPoint2(p1,p2,anglex,angley,anglez) {
         let rotatedM4 =
-            matrix2D.mul(
+            Math3D.matmul2D(
                 this.translateM4(
                     this.rotateM4(
                         this.makeTranslationM4(p2[0],p2[1],p2[2]),
@@ -366,7 +359,7 @@ export class Math3D { //some stuff for doing math in 3D
         var nodes = [];
 
         for(var i = 0; i < positions.length; i++){
-            let newnode = Object.assign({},node);
+            let newnode = JSON.parse(JSON.stringify(node));
             newnode.idx = i;
             newnode.position = positions[i];
             nodes.push(newnode);
@@ -377,12 +370,12 @@ export class Math3D { //some stuff for doing math in 3D
             for(var j = i; j < positions.length; j++) {
                 var dist = Math3D.distance(positions[i],positions[j]);
                 if(dist < isWithinRadius){
-                    var newNeighbori = Object.assign({},neighbor);
+                    var newNeighbori = JSON.parse(JSON.stringify(neighbor));
                     newNeighbori.position = positions[j];
                     newNeighbori.dist = dist;
                     newNeighbori.idx = nodes[j].idx;
                     nodes[i].neighbors.push(newNeighbori);
-                    var newNeighborj = Object.assign({},neighbor);
+                    var newNeighborj = JSON.parse(JSON.stringify(neighbor));
                     newNeighborj.position = positions[i];
                     newNeighborj.dist = dist;
                     newNeighborj.idx = positions[j];
@@ -541,7 +534,7 @@ export class camera { //pinhole camera model. Use to set your 3D rendering view 
         cameraMat = Math3D.rotateM4(cameraMat,this.rotation.x,this.rotation.y,this.rotation.z);
         cameraMat = Math3D.translateM4(cameraMat, this.position.x, this.position.y, this.position.z);
         var viewMat = Math3D.invertM4(cameraMat);
-        return matrix2D.mul(this.getPerspectiveMatrix(), viewMat); //View projection matrix result
+        return Math3D.matmul2D(this.getPerspectiveMatrix(), viewMat); //View projection matrix result
     }
 
     updateRotation() {
@@ -618,7 +611,7 @@ export class Physics {
         }
 
         for (let i = 0; i < nBodies; i++) {
-            this.physicsBodies.push(Object.assign({},this.bodyPrim));
+            this.physicsBodies.push(JSON.parse(JSON.stringify(this.bodyPrim)));
             this.physicsBodies[i].index = i;
         }
     }
