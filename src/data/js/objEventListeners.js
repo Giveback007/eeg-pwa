@@ -67,15 +67,15 @@ export class ObjectListener {
 }
 
 export class ObjectListenerInstance {
-    constructor(object,listenTo="__ANY__",onchange=this.onchange,interval="FRAMERATE") {
+    constructor(object,propName="__ANY__",onchange=this.onchange,interval="FRAMERATE") {
 
-        if(listenTo !== "__ANY__") {
-            if(typeof object[listenTo] === "function") {
+        if(propName !== "__ANY__") {
+            if(typeof object[propName] === "function") {
                 console.log("Warning: changes inside functions will not be detected");
             }
-            if(typeof object[listenTo] === 'object') {
-                for(var prop in object[listenTo]){
-                    if(typeof object[prop] === "function"){
+            if(typeof object[propName] === 'object') {
+                for(var propName in object[propName]){
+                    if(typeof object[propName] === "function"){
                         console.log("Warning: changes inside functions will not be detected");
                     }
                 }
@@ -85,9 +85,9 @@ export class ObjectListenerInstance {
         this.onchange = onchange;
 
         this.object = object; //Objects are always passed by reference
-        this.listenTo = listenTo;
+        this.propName = propName;
         this.propOld = undefined;
-        this.setListenerRef(listenTo);
+        this.setListenerRef(propName);
 
         this.running = true;
 
@@ -101,41 +101,41 @@ export class ObjectListenerInstance {
     }
 
     onchange = () => {
-        console.log(this.listenTo," changed from: ", this.propOld," to: ", this.object[this.listenTo]);
+        console.log(this.propName," changed from: ", this.propOld," to: ", this.object[this.propName]);
     }
 
-    setListenerRef = (listenTo) => {
-        if(listenTo === "__ANY__") {
+    setListenerRef = (propName) => {
+        if(propName === "__ANY__") {
             this.propOld = JSON.parse(JSON.stringify(this.object));
         }
-        else if(typeof this.object[listenTo] === "object"){
-            this.propOld = JSON.parse(JSON.stringify(this.object[listenTo]));
+        else if(typeof this.object[propName] === "object"){
+            this.propOld = JSON.parse(JSON.stringify(this.object[propName]));
         }
-        else if(typeof this.object[listenTo] === "function"){
+        else if(typeof this.object[propName] === "function"){
             console.error("Cannot listen to class or function instance");
         }
         else{
-            this.propOld = this.object[listenTo] //usually a number;
+            this.propOld = this.object[propName] //usually a number;
         }
     }
 
     check = () => {
 
-        if(this.listenTo === "__ANY__"){
+        if(this.propName === "__ANY__"){
             if(JSON.stringify(this.propOld) !== JSON.stringify(this.object)){
                 this.onchange();
-                this.setListenerRef(this.listenTo);
+                this.setListenerRef(this.propName);
             }
         }
-        else if(typeof this.object[this.listenTo] === "object") {
-            if(JSON.stringify(this.propOld) !== JSON.stringify(this.object[this.listenTo])){
+        else if(typeof this.object[this.propName] === "object") {
+            if(JSON.stringify(this.propOld) !== JSON.stringify(this.object[this.propName])){
                 this.onchange();
-                this.setListenerRef(this.listenTo);
+                this.setListenerRef(this.propName);
             }
         }
-        else if(this.object[this.listenTo] !== this.propOld) {
+        else if(this.object[this.propName] !== this.propOld) {
             this.onchange();
-            this.setListenerRef(this.listenTo);
+            this.setListenerRef(this.propName);
         }
         if(this.running === true) {
             if(this.interval === "FRAMERATE"){
