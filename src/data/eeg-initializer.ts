@@ -1,6 +1,9 @@
-import { eeg32, eegAtlas } from './eeg32'
+import { wait } from '@giveback007/util-lib';
+import { eegConnectNavBtn, eegDisconnectNavBtn } from './nav-bar-links';
 import { store } from './store';
-import { WorkerUtil } from './workerUtil'
+import { eeg32, eegAtlas } from './eeg32';
+import { WorkerUtil } from './workerUtil';
+import { Acts } from './actions/index.actions';
 
 export type Channel = {
     ch: number;
@@ -18,28 +21,33 @@ export const eegConnection = new eeg32(() => {
     store.setEegData(eegConnection.data); // Throttled updating
 }); //onDecoded callback to set state on front end.
 
-var receivedMsg = (msg: any) => {
-    if(msg.foo === "coherence") {
-        var fftData = [...msg.output[1]];
-        var coherenceData = [...msg.output[2]];
-        store.setState({
-            ["posFFTList"]:fftData,
-            ["coherenceResults"]:coherenceData
+const receivedMsg = (msg: { foo: string, output: any[] }) => {
+    if (msg.foo === "coherence") {
+
+        Acts.WorkerCoherence({
+            posFFTList: [...msg.output[1]],
+            coherenceResults: [...msg.output[2]]
         });
 
-        var lastPostTime = store.getState().lastPostTime;
+        //
+        // store.setState({
+        //     posFFTList : fftData,
+        //     coherenceResults: coherenceData
+        // });
 
-        eegConnection.channelTags.forEach((row: any,i: any) => {
-            if((row.tag !== null) && (i < eegConnection.nChannels)){
-                //console.log(tag);
-                atlas.mapFFTData(fftData, lastPostTime, i, row.tag);
-            }
-        });
+        // var lastPostTime = store.getState().lastPostTime;
 
-        atlas.mapCoherenceData(coherenceData, lastPostTime);
+        // eegConnection.channelTags.forEach((row: any,i: any) => {
+        //     if((row.tag !== null) && (i < eegConnection.nChannels)){
+        //         //console.log(tag);
+        //         atlas.mapFFTData(fftData, lastPostTime, i, row.tag);
+        //     }
+        // });
+
+        // atlas.mapCoherenceData(coherenceData, lastPostTime);
 
 
-        store.action('WORKER_DONE');
+        // Acts.WorkerDone(msg);
     }
 }
 
@@ -57,9 +65,25 @@ atlas.coherenceMap.shared.bandPassWindow = bandPassWindow;
 atlas.coherenceMap.shared.bandFreqs = atlas.fftMap.shared.bandFreqs;
 
 
-store.actionSub('WORKER_DONE', (a) => {
-    var s = store.getState();
-    store.setState({["lastPostTime"]: eegConnection.data.ms[eegConnection.data.ms.length-1]});
+store.actionSub('WORKER_COHERENCE', (a) => {
+    store.setState({
+        ...a.data,
+        lastPostTime: eegConnection.data.ms[eegConnection.data.ms.length-1]
+    });
+
+    const s = store.getState();
+    const { coherenceResults, posFFTList } = a.data;
+
+    eegConnection.channelTags.forEach((row: any, i: any) => {
+        if(row.tag !== null && i < eegConnection.nChannels){
+            //console.log(tag);
+            atlas.mapFFTData(posFFTList, s.lastPostTime, i, row.tag);
+        }
+    });
+
+    atlas.mapCoherenceData(coherenceResults, s.lastPostTime);
+
+
     if(s.fdBackMode === 'coherence') {
         workers.postToWorker({foo:'coherence', input:[bufferData(), s.nSec, s.freqStart, s.freqEnd, eegConnection.scalar]});
     }
@@ -74,8 +98,27 @@ store.stateSub('coherenceResults', (s) => {
 });
 
 //Sub action for setting the bandpass filter to update the bandpass
-store.actionSub('SET_BANDPASS', (a) => {
+store.actionSub('BANDPASS_SET', (a) => {
 
+});
+
+store.actionSub(['EEG_CONNECT', 'EEG_DISCONNECT'], async (a) => {
+    switch (a.type) {
+        case "EEG_CONNECT": {
+            store.changeNavBtn('left', 0, { ...eegDisconnectNavBtn, loading: true });
+            await eegConnection.setupSerialAsync();
+            await wait(500); // creates a sense of a more responsive ui
+            store.changeNavBtn('left', 0, eegDisconnectNavBtn);
+            break;
+        }
+        case "EEG_DISCONNECT": {
+            store.changeNavBtn('left', 0, { ...eegConnectNavBtn, loading: true });
+            await eegConnection.closePort();
+            await wait(500); // creates a sense of a more responsive ui
+            store.changeNavBtn('left', 0, eegConnectNavBtn);
+            break;
+        }
+    }
 });
 
 function bufferData() {
@@ -95,10 +138,11 @@ function updateBandPass(freqStart, freqEnd) {
 
     var freq0 = freqStart; var freq1 = freqEnd;
     if (freq0 > freq1) {
-     freq0 = 0;
+        freq0 = 0;
     }
     if(freq1 > eegConnection.sps*0.5){
-     freq1 = eegConnection.sps*0.5; document.getElementById("freqEnd").value = freq1;
+        freq1 = eegConnection.sps*0.5;
+        document.getElementById("freqEnd").value = freq1;
     }
 
     atlas.fftMap = atlas.makeAtlas10_20(); //reset atlas

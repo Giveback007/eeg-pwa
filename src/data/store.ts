@@ -2,16 +2,11 @@ import {
     getUrlParams, StateManager, stateManagerReactLinker, UrlObj,
     urlObjToString
 } from "@giveback007/browser-utils";
-import { Dict, isType, wait } from '@giveback007/util-lib';
+import { Dict, isType } from '@giveback007/util-lib';
 import { createBrowserHistory } from "history";
 import type { NavButton } from "src/components/Navbar/Navbar";
-import { eegConnection } from "./eeg-initializer";
-import { eegConnectNavBtn, eegDisconnectNavBtn, navLeftLinks, navRightLinks } from "./nav-bar-links";
-
-type ChannelAction = {
-    type: 'TAG_SET',
-    data: string,
-}
+import type { Actions } from "./actions/index.actions";
+import { navLeftLinks, navRightLinks } from "./nav-bar-links";
 
 export type State = {
     url: ReturnType<typeof getUrlParams>;
@@ -22,16 +17,21 @@ export type State = {
     lastVal: Dict<number> | null; // FIXME
     basicExampleChannels: string[]; // not correct, simply being used for basic example.
 
+    /** Number of seconds of FFT data to process */
     nSec: number,
+    /**  Beginning of bandpass window */
     freqStart: number,
+    /** End of bandpass window */
     freqEnd: number,
+    /** Last time when data was posted to worker */
     lastPostTime: number,
+    /** List of FFT results from worker */
     posFFTList: number[],
+    /** List of coherence results from worker */
     coherenceResults: number[],
     bandPassWindow: number[],
     nSecAdcGraph: number,
     fdBackMode: "coherence" | "scp",
-    newMsg: boolean,
     analyze: boolean,
     rawFeed: boolean,
 }
@@ -45,18 +45,17 @@ const initState: State = {
     lastVal: { },
     basicExampleChannels: ['T2', 'T4'],
 
-    nSec: 1, // Number of seconds of FFT data to process
-    freqStart: 0, // Beginning of bandpass window
-    freqEnd: 100, // End of bandpass window
-    lastPostTime: 0, //Last time when data was posted to worker
-    posFFTList: [], // List of FFT results from worker
-    coherenceResults: [], // List of coherence results from worker
+    nSec: 1,
+    freqStart: 0,
+    freqEnd: 100,
+    lastPostTime: 0,
+    posFFTList: [],
+    coherenceResults: [],
     nSecAdcGraph: 10,
     fdBackMode: "coherence",
-    newMsg: true,
     analyze: false,
     rawFeed: false,
-
+    bandPassWindow: [],
 }
 
 
@@ -68,15 +67,13 @@ class AppStateManager extends StateManager<State, Actions> {
             store.setState({ url: getUrlParams() }));
 
         if (env === 'development')
-            this.actionSub(true, (a) => log(a));
+            this.actionSub(true, (a) => log('store action:', a));
     }
 
     setPath(url: UrlObj | string) {
         const currentPath = browserHist.location.pathname;
-        if (isType(url, 'string')) {
-            return currentPath === url ?
-                null : browserHist.push(url);
-        }
+        if (isType(url, 'string'))
+            return currentPath === url ? null : browserHist.push(url);
 
         const obj = { ...url };
         delete obj.origin;
@@ -87,7 +84,11 @@ class AppStateManager extends StateManager<State, Actions> {
         browserHist.push(str);
     }
 
-    changeNavBtn(nav: 'left' | 'right', idx: number, btn: NavButton) {
+    changeNavBtn(
+        nav: 'left' | 'right',
+        idx: number,
+        btn: NavButton
+    ) {
         const key = nav === 'left' ? 'navLeftLinks' : 'navRightLinks';
         const arr = [ ...this.getState()[key] ];
         arr[idx] = btn;
@@ -95,48 +96,15 @@ class AppStateManager extends StateManager<State, Actions> {
     }
 
     setEegData(data: any) { // FIXME
-      this.throttledSetState(50, {
-        lastVal: data
-      })
+        this.throttledSetState(50, {
+            lastVal: data
+        })
     }
 }
 
 export const browserHist = createBrowserHistory();
 export const store = new AppStateManager();
 export const linker = stateManagerReactLinker(store);
-
-
-store.actionSub([], async (a) => {
-    switch (a.type) {
-        case "WORKER_DONE": {
-
-          break;
-        }
-        case "EEG_CONNECT": {
-            store.changeNavBtn('left', 0, { ...eegDisconnectNavBtn, loading: true });
-            await eegConnection.setupSerialAsync();
-            await wait(500); // creates a sense of a more responsive ui
-            store.changeNavBtn('left', 0, eegDisconnectNavBtn);
-            break;
-        }
-        case "EEG_DISCONNECT": {
-            store.changeNavBtn('left', 0, { ...eegConnectNavBtn, loading: true });
-            await eegConnection.closePort();
-            await wait(500); // creates a sense of a more responsive ui
-            store.changeNavBtn('left', 0, eegConnectNavBtn);
-            break;
-        }
-        case "SET_TAGS": {
-
-          break;
-        }
-        case "SET_BANDPASS": {
-          break;
-        }
-    }
-});
-
-
 
 /*
 let obj = new eegatlas([{tag:"Tag1", ch: 0},{tag:"Tag2", ch:1}]);

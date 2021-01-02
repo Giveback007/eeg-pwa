@@ -1,7 +1,7 @@
 import { icons } from "src/components/icons";
 import Sessions from "views/Sessions";
 import Settings from "views/Settings";
-import Dashboard from 'views/Dasboard';
+import Dashboard from 'views/Dashboard';
 
 export type RouteObj = {
     path: string;

@@ -1,12 +1,12 @@
 import type { NavButton } from "src/components/Navbar/Navbar";
 
 export const eegConnectNavBtn: NavButton = {
-    icon: 'WifiOffIcon',
+    icon: 'WifiOff',
     action: 'EEG_CONNECT'
 }
 
 export const eegDisconnectNavBtn: NavButton = {
-    icon: 'WifiIcon',
+    icon: 'Wifi',
     action: 'EEG_DISCONNECT',
     active: true,
 }

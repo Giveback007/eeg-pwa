@@ -2,6 +2,7 @@ import React from 'react';
 import { linker, State } from '../data/store';
 
 type S = { };
+
 type P = { } & ReturnType<typeof link>;
 
 class Settings extends React.Component<P, S> {

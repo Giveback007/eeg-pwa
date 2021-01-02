@@ -72,7 +72,9 @@
     "devtool",
     "devtools",
     "postbuild",
-    "redux"
+    "redux",
+    "timechart",
+    "uplot"
   ],
   "editor.rulers": [65],
   "typescript.tsdk": "node_modules\\typescript\\lib",

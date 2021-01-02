@@ -31,7 +31,7 @@ function NavBtn(p: NavButton & { handleDrawerToggle?: () => void }) {
     IC = IC ? <IC className="btn-icon" /> : null;
 
     const fct = () => {
-        if (p.action) store.action({ type: p.action });
+        if (p.action) store.action({ type: p.action as any });
         if (p.route) store.setPath(p.route);
 
         if (p.handleDrawerToggle) p.handleDrawerToggle();
