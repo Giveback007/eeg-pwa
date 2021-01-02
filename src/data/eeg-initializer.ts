@@ -61,11 +61,11 @@ atlas.coherenceMap.shared.bandPassWindow = bandPassWindow;
 atlas.coherenceMap.shared.bandFreqs = atlas.fftMap.shared.bandFreqs;
 
 
-store.actionSub('COHERENCE_WORKER_DONE', (a) => {
+store.actionSub('COHERENCE_WORKER_DONE', async (a) => {
   runEEGWorker();
 });
 
-store.actionSub('CHANNEL_VIEW_SET', (a) => {
+store.actionSub('CHANNEL_VIEW_SET', async (a) => {
     var val =  a.data; //s.channelView
 
     if(val.length === 0) { return; }
@@ -100,7 +100,7 @@ store.actionSub('CHANNEL_VIEW_SET', (a) => {
     //setuPlot();
 });
 
-store.actionSub('CHANNEL_TAGS_SET', (a) => {
+store.actionSub('CHANNEL_TAGS_SET', async (a) => {
     var val = a.data; //s.channelTags
 
     if(val.length === 0) { return; }
@@ -187,28 +187,25 @@ store.actionSub('CHANNEL_TAGS_SET', (a) => {
 });
 
 //Sub action for setting the bandpass filter to update the bandpass
-store.actionSub('BANDPASS_SET', (a) => {
+store.actionSub('BANDPASS_SET', async (a) => {
   updateBandPass(a.data.freqStart,a.data.freqEnd);
 });
 
-store.actionSub(['EEG_CONNECT', 'EEG_DISCONNECT'], async (a) => {
-    switch (a.type) {
-        case "EEG_CONNECT": {
-            store.changeNavBtn('left', 0, { ...eegDisconnectNavBtn, loading: true });
-            await eegConnection.setupSerialAsync();
-            await wait(500); // creates a sense of a more responsive ui
-            store.changeNavBtn('left', 0, eegDisconnectNavBtn);
-            break;
-        }
-        case "EEG_DISCONNECT": {
-            store.changeNavBtn('left', 0, { ...eegConnectNavBtn, loading: true });
-            await eegConnection.closePort();
-            await wait(500); // creates a sense of a more responsive ui
-            store.changeNavBtn('left', 0, eegConnectNavBtn);
-            break;
-        }
-    }
+
+store.actionSub('EEG_CONNECT', async (a) => {
+  store.changeNavBtn('left', 0, { ...eegDisconnectNavBtn, loading: true });
+  await eegConnection.setupSerialAsync();
+  await wait(500); // creates a sense of a more responsive ui
+  store.changeNavBtn('left', 0, eegDisconnectNavBtn);
 });
+
+store.actionSub('EEG_DISCONNECT', async (a) => {
+  store.changeNavBtn('left', 0, { ...eegConnectNavBtn, loading: true });
+  await eegConnection.closePort();
+  await wait(500); // creates a sense of a more responsive ui
+  store.changeNavBtn('left', 0, eegConnectNavBtn);
+});
+
 
 store.actionSub('EEG_ANALYZE', async (a) => {
   store.setState({analyze: true});

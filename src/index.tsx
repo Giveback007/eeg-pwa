@@ -26,7 +26,7 @@ import ReactDOM from 'react-dom';
 import { Router, Route, Switch, Redirect } from "react-router-dom";
 // import Sessions from './views/Sessions';
 import { browserHist } from './data/store';
-import Dasboard from './views/Dashboard';
+import Dashboard from './views/Dashboard';
 import Navbar from 'src/components/Navbar/Navbar';
 import Settings from './views/Settings';
 
@@ -40,7 +40,7 @@ import Settings from './views/Settings';
         />
         <Router history={browserHist}>
             <Switch>
-                <Route path="/dashboard" component={Dasboard} />
+                <Route path="/dashboard" component={Dashboard} />
                 <Route path="/settings" component={Settings} />
                 <Redirect from="/" to="/dashboard" />
             </Switch>

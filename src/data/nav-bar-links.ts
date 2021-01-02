@@ -33,14 +33,14 @@ export const navRightLinks: NavButton[] = [{
     // loading: true
 }, {
     title: 'Set BandPass',
-    action: 'BANDPASS'
+    action: 'BANDPASS_SET'
     // icon: 'PlayArrow',
 }, {
     title: 'Set Channel View',
-    action: 'CHANNEL_SET_VIEW',
+    action: 'CHANNEL_VIEW_SET',
 }, {
     title: 'Set Tags',
-    action: 'TAGS_SET'
+    action: 'CHANNEL_TAGS_SET'
 }, {
     title: 'Settings',
     route: '/settings'

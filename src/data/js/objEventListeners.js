@@ -79,7 +79,6 @@ export class ObjectListenerInstance {
             }
         }
 
-
         this.onchange = onchange;
 
         this.object = object; //Objects are always passed by reference
