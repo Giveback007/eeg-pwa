@@ -13,12 +13,15 @@ x.y = 2;
 
 */
 
+
+//Create instance and then call instance.addListener(listenerName,objectToListenTo,propToListenTo,onchange,interval).
+//name, propToListenTo, onchange, and interval are optional (leave or set as undefined). Onchange is a custom callback just like for other event listeners. Set a name to make it easier to start and stop or edit each listener.
 export class ObjectListener {
     constructor() {
         this.listeners = [];
     }
 
-    addListener(listenerName=null,objectToListenTo,listenTo=undefined,onchange=undefined,interval=undefined) {
+    addListener(listenerName=null,objectToListenTo,propToListenTo=undefined,onchange=undefined,interval=undefined) {
         if(objectToListenTo === undefined) {
             console.error("You must assign an object");
             return;
@@ -28,7 +31,7 @@ export class ObjectListener {
         if(name === null) {
             name = Math.floor(Math.random()*100000);
         }
-        var listener = {name:name, listener: new ObjectListenerInstance(objectToListenTo,listenTo,onchange,interval)};
+        var listener = {name:name, listener: new ObjectListenerInstance(objectToListenTo,propToListenTo,onchange,interval)};
         this.listeners.push(listener);
     }
 
