@@ -32,6 +32,7 @@ const receivedMsg = (msg: { foo: string, output: any[] }) => {
         coherenceResults:coherenceResults
       });
 
+      var s = store.getState();
 
       eegConnection.channelTags.forEach((row: any, i: any) => {
         if(row.tag !== null && i < eegConnection.nChannels){
@@ -43,14 +44,13 @@ const receivedMsg = (msg: { foo: string, output: any[] }) => {
       atlas.mapCoherenceData(coherenceResults, s.lastPostTime);
 
 
-      Actions.WORKER_COHERENCE();
+      Actions.COHERENCE_WORKER_DONE(); // Called AFTER processing everything into the state managers
     }
 }
 
 export const workers = new WorkerUtil(2,'./js/eegworker.js',(msg: any) => {receivedMsg(msg)}); //not sure I am passing this correctly
 
 let bandPassWindow = atlas.bandPassWindow(0,100,eegConnection.sps)
-
 
 
 atlas.fftMap = atlas.makeAtlas10_20();
@@ -61,7 +61,7 @@ atlas.coherenceMap.shared.bandPassWindow = bandPassWindow;
 atlas.coherenceMap.shared.bandFreqs = atlas.fftMap.shared.bandFreqs;
 
 
-store.actionSub('WORKER_COHERENCE', (a) => {
+store.actionSub('COHERENCE_WORKER_DONE', (a) => {
   const s = store.getState();
 
   if(s.fdBackMode === 'coherence') {

@@ -14,8 +14,8 @@ export const Actions = {
         type: 'BANDPASS_SET', data
     } as const),
 
-    WORKER_COHERENCE: () => a({
-        type:'WORKER_COHERENCE'
+    COHERENCE_WORKER_DONE: () => a({
+        type:'COHERENCE_WORKER_DONE'
     }),
 
     EEG_CONNECT: () => a({ type: "EEG_CONNECT" } as const),

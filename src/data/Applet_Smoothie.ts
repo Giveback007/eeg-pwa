@@ -42,7 +42,7 @@ export class SmoothieApplet extends Applet<S,M> {
         this.width = props.width;
         this.height = props.height;
 
-        store.actionSub("WORKER_DONE", (s, prev) => {
+        store.actionSub("COHERENCE_WORKER_DONE", (s, prev) => {
           this.onUpdate();
         });
 
