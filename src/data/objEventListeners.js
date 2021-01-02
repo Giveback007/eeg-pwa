@@ -4,7 +4,12 @@ export class ObjectListener {
         this.listeners = [];
     }
 
-    addListener(listenerName=null,objectToListenTo,listenTo="__ANY__",onchange=undefined,interval="FRAMERATE") {
+    addListener(listenerName=null,objectToListenTo,listenTo=undefined,onchange=undefined,interval=undefined) {
+        if(objectToListenTo === undefined) {
+            console.error("You must assign an object");
+            return;
+        }
+
         var name = listenerName;
         if(name === null) {
             name = Math.floor(Math.random()*100000);
