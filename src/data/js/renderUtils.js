@@ -1096,6 +1096,9 @@ class WebGLHelper {
     constructor(canvasId) {
         this.canvas = document.getElementById(canvasId);
         this.gl = canvas.getContext("webgl");
+        if(!gl) {
+            return;
+        }
 
         this.vertexShader = null;
         this.fragmentShader = null;
@@ -1176,12 +1179,12 @@ class WebGLHelper {
         this.canvas.insertAdjacentHTML('beforebegin', vertexShader);
         this.canvas.insertAdjacentHTML('beforebegin', fragShader);
 
-        this.vertexShader = document.getElementById("vertexShader").text;
-        this.fragmentShader = document.getElementById("fragmentShader").text;
+        this.vertexShader = document.getElementById(vId).text;
+        this.fragmentShader = document.getElementById(fId).text;
 
     }
 
-    createShader(gl, type, source) {
+    static createShader(gl, type, source) {
         var shader = gl.createShader(type);
         gl.shaderSource(shader, source);
         gl.compileShader(shader);
@@ -1196,7 +1199,7 @@ class WebGLHelper {
         }
     }
 
-    createProgram(gl, vertexShader, fragmentShader) {
+    static createProgram(gl, vertexShader, fragmentShader) {
         var program = gl.createProgram();
         gl.attachShader(program, vertexShader);
         gl.attachShader(program, fragmentShader);

@@ -50,7 +50,7 @@ const receivedMsg = (msg: { foo: string, output: any[] }) => {
 
 export const workers = new WorkerUtil(2,'./js/eegworker.js',(msg: any) => {receivedMsg(msg)}); //not sure I am passing this correctly
 
-export function runEegInitializer() {
+export function runEEGinitializer() {
 
   let bandPassWindow = atlas.bandPassWindow(0,100,eegConnection.sps)
 

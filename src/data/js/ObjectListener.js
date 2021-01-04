@@ -22,6 +22,7 @@ export class ObjectListener {
         this.listeners = [];
     }
 
+    //add a new object listener with specified props (or none to watch the whole object), and onchange functions, with optional interval
     addListener(listenerName=null,objectToListenTo,propToListenTo=undefined,onchange=undefined,interval=undefined) {
         if(objectToListenTo === undefined) {
             console.error("You must assign an object");
@@ -51,6 +52,39 @@ export class ObjectListener {
         }
     }
 
+    //Add extra onchange functions
+    addFunc = (newCallback=null,name=null) => {
+        if(name === null) {
+            this.listeners.forEach((obj,i) => {
+                obj.listener.onchangeFuncs.push(newCallback);
+            });
+        }
+        else {
+            var found = this.listeners.find((o,i) => {
+                if(o.name === name) {
+                    o.listener.onchangeFuncs.push(newCallback);
+                }
+            });
+        }
+    }
+
+    //Remove extra onchange functions
+    removeFuncs = (name = null, idx = null) => {
+        if(name === null) {
+            this.listeners.forEach((obj,i) => {
+                obj.listener.removeFuncs(idx);
+            });
+        }
+        else {
+            var found = this.listeners.find((o,i) => {
+                if(o.name === name) {
+                    o.listener.removeFuncs(idx);
+                }
+            });
+        }
+    }
+
+    //Stop all or named listeners
     stop(name=null) {
         if(name === null) {
             this.listeners.forEach((obj,i) => {
@@ -66,6 +100,7 @@ export class ObjectListener {
         }
     }
 
+    //Restart all or named listeners
     start(name=null) {
         if(name === null) {
             this.listeners.forEach((obj,i) => {
@@ -82,6 +117,7 @@ export class ObjectListener {
     }
 }
 
+//Instance of an object listener. This will subscribe to object properties (or whole objects) and run attached functions when a change is detected.
 export class ObjectListenerInstance {
     constructor(object,propName="__ANY__",onchange=this.onchange,interval="FRAMERATE") {
 
@@ -98,7 +134,8 @@ export class ObjectListenerInstance {
             }
         }
 
-        this.onchange = onchange;
+        this.onchange = onchange; //Main onchange function
+        this.onchangeFuncs = []; //Execute extra functions pushed to this array
 
         this.object = object; //Objects are always passed by reference
         this.propName = propName;
@@ -116,10 +153,34 @@ export class ObjectListenerInstance {
 
     }
 
+    //Main onchange execution
     onchange = () => {
         console.log(this.propName," changed from: ", this.propOld," to: ", this.object[this.propName]);
     }
 
+    //Add extra onchange functions for execution
+    addFunc = (onchange) => {
+        this.onchangeFuncs.push(onchange);
+    }
+
+    //Remove extra onchange functions
+    removeFuncs(idx = null) {
+        if(idx === null) {
+            this.onchangeFuncs = [];
+        }
+        else if(this.onchangeFuncs[idx] !== undefined) {
+            this.onchangeFuncs.splice(idx,1);
+        }
+    }
+
+    //Execute extra onchange functions
+    onchangeMulti = () => {
+        this.onchangeFuncs.forEach((func,i) => {
+            func();
+        });
+    }
+
+    //Update listener reference copy.
     setListenerRef = (propName) => {
         if(propName === "__ANY__") {
             this.propOld = JSON.parse(JSON.stringify(this.object));
@@ -140,17 +201,20 @@ export class ObjectListenerInstance {
         if(this.propName === "__ANY__"){
             if(JSON.stringify(this.propOld) !== JSON.stringify(this.object)){
                 this.onchange();
+                if(this.onchangeFuncs.length > 0) { this.onchangeMulti(); }
                 this.setListenerRef(this.propName);
             }
         }
         else if(typeof this.object[this.propName] === "object") {
             if(JSON.stringify(this.propOld) !== JSON.stringify(this.object[this.propName])){
                 this.onchange();
+                if(this.onchangeFuncs.length > 0) { this.onchangeMulti(); }
                 this.setListenerRef(this.propName);
             }
         }
         else if(this.object[this.propName] !== this.propOld) {
             this.onchange();
+            if(this.onchangeFuncs.length > 0) { this.onchangeMulti(); }
             this.setListenerRef(this.propName);
         }
         if(this.running === true) {

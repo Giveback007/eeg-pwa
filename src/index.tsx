@@ -29,7 +29,7 @@ import { browserHist } from './data/store';
 import Dashboard from './views/Dashboard';
 import Navbar from 'src/components/Navbar/Navbar';
 import Settings from './views/Settings';
-import { runEegInitializer } from './data/eeg-initializer';
+import { runEEGinitializer } from './data/eeg-initializer';
 
 !(async function() { // workaround to work with quokka.js
     if (!g.env) (window as any).env = (await import('./env')).env.MODE;
@@ -46,7 +46,7 @@ import { runEegInitializer } from './data/eeg-initializer';
         document.getElementById('root')
     );
 
-    runEegInitializer();
+    runEEGinitializer();
 })();
 
 
