@@ -6,54 +6,83 @@ class Math3D { //some stuff for doing math in 3D
 
     }
 
-    static dot(vec1,vec2) { //Generalized
+    static dot(vec1,vec2) { //nDimensional vector dot product
         var dot=0;
         for(var i=0; i<vec.length; i++) {
             dot+= vec1[i]*vec2[i];
         }
     }
 
-    static cross(vec1,vec2) { //3D cross product
+    static cross3D(vec1,vec2) { //3D vector cross product
         return [
             vec1[1]*vec2[2]-vec1[2]*vec2[1],
             vec1[2]*vec2[0]-vec1[0]*vec2[2],
             vec1[0]*vec2[1]-vec1[1]*vec2[0]]
     }
 
-    static magnitude(vec1) {
-        return Math.sqrt(vec1[0]*vec1[0]+vec1[1]*vec1[1]+vec1[2]*vec1[2])
+    static magnitude(vec) { //nDimensional magnitude
+        var sqrd = 0;
+        vec.forEach((c) => {
+            sqrd+=c*c;
+        })
+        return Math.sqrt(sqrd)
     }
 
-    static distance(point1, point2) {
-        return Math.sqrt(
-            (point2[0]-point1[0])*(point2[0]-point1[0]) +
-            (point2[1]-point1[1])*(point2[1]-point1[1]) +
-            (point2[2]-point1[2])*(point2[2]-point1[2])
-            );
+    static distance(point1, point2) { //nDimensional vector distance function
+        var dsqrd = 0;
+        point1.forEach((c,i) => {
+            dsqrd += (point2[i] - c)*(point2[i] - c);
+        })
+        return Math.sqrt(dsqrd);
     }
 
-    //Make vector from two points
-    static makeVec(point1,point2) {
-        return [point2[0]-point1[0],point2[1]-point1[1],point2[2]-point1[2]];
+    static makeVec(point1,point2) {  //Make vector from two nDimensional points (arrays)
+        var vec = [];
+        point1.forEach((c,i) => {
+            vec.push(point2[i]-c);
+        })
+        return vec;
     }
 
-    //Find normal to a plane define by points (v(1to2) cross v(1to3)), can set to return the reverse normal (v(1to3) cross v(1to2))
+    //Find normal to a plane define by points (v(1to2) cross v(1to3)), can set to return the reverse normal (v(1to3) cross v(1to2)). Use to calculate triangle normals
     static calcNormal(point1,point2,point3,pos=true) {
         var QR = makeVec(point1,point2);
         var QS = makeVec(point1,point3);
 
         if(pos === true){
-            return this.cross(QR,QS);
+            return this.cross3D(QR,QS);
         }
         else {
-            return this.cross(QS,QR);
+            return this.cross3D(QS,QR);
         }
     }
 
-    static normalize(vec){
+    static calcNormalMesh(mesh){
+        var normalMesh = [...mesh];
+        for(var i = 0; i<mesh.length; i+=9){
+            var normal = this.calcNormal([mesh[i],mesh[i+1],mesh[i+2]],[mesh[i+3],mesh[i+4],mesh[i+5]],[mesh[i+6],mesh[i+7],mesh[i+8]]);
+            normalMesh[i]   = normal[0];
+            normalMesh[i+1] = normal[1];
+            normalMesh[i+2] = normal[2];
+            normalMesh[i+3] = normal[0];
+            normalMesh[i+4] = normal[1];
+            normalMesh[i+5] = normal[2];
+            normalMesh[i+6] = normal[0];
+            normalMesh[i+7] = normal[1];
+            normalMesh[i+8] = normal[2];
+        }
+
+        return normalMesh;
+    }
+
+    static normalize(vec) { //nDimensional normalization
         var norm = 0;
-        norm = Math.sqrt(this.magnitude(vec))
-        return [vec[0]*norm,vec[1]*norm,vec[2]*norm];
+        norm = Math.sqrt(this.magnitude(vec));
+        var vecn = [];
+        vec.forEach((c,i) => {
+            vecn.push(c*norm);
+        })
+        return vecn;
     }
 
     //Rotates a list of 3D vectors about the origin. Usually better to supply transforms as matrices for the GPU to multiply
