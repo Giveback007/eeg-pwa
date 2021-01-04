@@ -1,7 +1,7 @@
-//Utilities for CPU-side render prep. Contains graphnodes and projection matrices. For super optimal matrix math use glMatrix (https://github.com/toji/gl-matrix)
+//Utilities for WebGL render prep. Contains graphnodes and projection matrices. For super optimal matrix math use glMatrix (https://github.com/toji/gl-matrix) or some other math utility
+//TODO: lighting, quick geometry buffering functions, demonstrate physics, maybe scrap the 2D matrix math for typical quicker 1D array based matrix math
 
-
-export class Math3D { //some stuff for doing math in 3D
+class Math3D { //some stuff for doing math in 3D
     constructor() {
 
     }
@@ -56,7 +56,7 @@ export class Math3D { //some stuff for doing math in 3D
         return [vec[0]*norm,vec[1]*norm,vec[2]*norm];
     }
 
-    //Rotates a list of 3D vectors about the origin
+    //Rotates a list of 3D vectors about the origin. Usually better to supply transforms as matrices for the GPU to multiply
     static rotateMesh(mesh, pitch, roll, yaw) {
         var cosa = Math.cos(yaw);
         var sina = Math.sin(yaw);
@@ -81,17 +81,37 @@ export class Math3D { //some stuff for doing math in 3D
 
         var result = [...mesh];
 
-        for (var i = 0; i < mesh.length; i++) {
-            var px = mesh[i][0];
-            var py = mesh[i][1];
-            var pz = mesh[i][2];
+        for (var i = 0; i < mesh.length; i+=3) {
+            var px = mesh[i];
+            var py = mesh[i+1];
+            var pz = mesh[i+2];
 
-            result[i][0] = Axx*px + Axy*py + Axz*pz;
-            result[i][1] = Ayx*px + Ayy*py + Ayz*pz;
-            result[i][2] = Azx*px + Azy*py + Azz*pz;
+            result[i] = Axx*px + Axy*py + Axz*pz;
+            result[i+1] = Ayx*px + Ayy*py + Ayz*pz;
+            result[i+2] = Azx*px + Azy*py + Azz*pz;
         }
 
         return result;
+    }
+
+    //Mesh is an array of vec3's offset by idx+=3
+    static translateMesh(mesh, xOffset, yOffset, zOffset) {
+        var result = [...mesh];
+        for(var i = 0; i < mesh.length; i+=3) {
+            result[i]   = mesh[i]+xOffset
+            result[i+1] = mesh[i+1]+yOffset;
+            result[i+2] = mesh[i+2]+zOffset;
+        }
+    }
+
+    //Scale about origin
+    static scaleMesh(mesh, xScalar, yScalar, zScalar) {
+        var result = [...mesh];
+        for(var i = 0; i < mesh.length; i+=3) {
+            result[i]   = mesh[i]*xScalar
+            result[i+1] = mesh[i+1]*yScalar;
+            result[i+2] = mesh[i+2]*zScalar;
+        }
     }
 
     static transposeMat2D(mat2D){
@@ -178,7 +198,7 @@ export class Math3D { //some stuff for doing math in 3D
         ];
     }
 
-    staticzRotationM4(angleInRadians) {
+    static zRotationM4(angleInRadians) {
         var c = Math.cos(angleInRadians);
         var s = Math.sin(angleInRadians);
 
@@ -220,7 +240,7 @@ export class Math3D { //some stuff for doing math in 3D
         return [rotatedM4[0][3],rotatedM4[1][3],rotatedM4[2][3]]
     }
 
-    //4D matrix inversion
+    //4D matrix inversion. This is atypical formatting (usually mat4s are represented by a 1D array, which is more efficient)
     static invertM4(mat4) {
         var m = mat4;
         var inv = [...mat4];
@@ -339,6 +359,16 @@ export class Math3D { //some stuff for doing math in 3D
         return inv;
     }
 
+    //Convert 2D matrix (array of arrays) to a buffer (1D array). Not an actual ArrayBuffer which is meant for byte codes
+    static bufferMat2D(mat2D){
+        var arraybuffer = [];
+        mat2D.forEach((arr,i)=>{
+            arraybuffer.push(...arr);
+        });
+
+        return arraybuffer;
+    }
+
     //Fairly efficient nearest neighbor search. Supply list of coordinates (array of Array(3)) and maximum radius to be considered a neighbor.
     //Returns a list of nodes with [{idx:0,neighbors:[{idx:j,position:[x,y,z],dist:d}]},{...},...]. Neighbors are auto sorted by distance.
     //Current complexity: n(n+1)/2, there are faster ways to do it but this should be good enough
@@ -356,13 +386,13 @@ export class Math3D { //some stuff for doing math in 3D
             dist: null
         }
 
-        var nodes = [];
+        var tree = [];
 
         for(var i = 0; i < positions.length; i++){
             let newnode = JSON.parse(JSON.stringify(node));
             newnode.idx = i;
             newnode.position = positions[i];
-            nodes.push(newnode);
+            tree.push(newnode);
         }
 
         //Nearest neighbor search. This can be heavily optimized.
@@ -373,26 +403,25 @@ export class Math3D { //some stuff for doing math in 3D
                     var newNeighbori = JSON.parse(JSON.stringify(neighbor));
                     newNeighbori.position = positions[j];
                     newNeighbori.dist = dist;
-                    newNeighbori.idx = nodes[j].idx;
-                    nodes[i].neighbors.push(newNeighbori);
+                    newNeighbori.idx = tree[j].idx;
+                    tree[i].neighbors.push(newNeighbori);
                     var newNeighborj = JSON.parse(JSON.stringify(neighbor));
                     newNeighborj.position = positions[i];
                     newNeighborj.dist = dist;
                     newNeighborj.idx = positions[j];
                 }
             }
-            nodes[i].neighbors.sort(function(a,b) {return a.dist - b.dist}); //Sort by distance
+            tree[i].neighbors.sort(function(a,b) {return a.dist - b.dist}); //Sort by distance
         }
 
-        return nodes;
-
+        return tree;
     }
+
 }
 
 
 
-
-export class graphNode { //Use this to organize 3D models hierarchically if needed
+class graphNode { //Use this to organize 3D models hierarchically if needed and apply transforms (not very optimal for real time)
     constructor(parent=null, children=[null], id=null) {
         this.id = id;
         this.parent = parent; //Access/inherit parent object
@@ -401,12 +430,15 @@ export class graphNode { //Use this to organize 3D models hierarchically if need
         this.localPos = {x:0,y:0,z:0};  //Local x,y,z position offset. Render as global + local pos
         this.globalRot = {x:0,y:0,z:0}; //Global x,y,z rotation (rads)
         this.localRot = {x:0,y:0,z:0}; //Local x,y,z rotation (rads). Render as global + local rot
+        this.globalScale = {x:1,y:1,z:1};
+        this.localScale = {x:1,y:1,z:1};
         this.functions = []; // List of functions. E.g. function foo(x) {return x;}; this.functions["foo"] = foo; this.functions.foo = foo(x) {return x;}. Got it?
 
         //3D Rendering stuff
         this.model = null; //
-        this.mesh = [[0,0,0],[1,1,1],[1,0,0],[0,0,0]]; // Model vertex list, array of vec3's xyz, so push x,y,z components. For ThreeJS use THREE.Mesh(vertices, material) to generate a model from this list with the selected material
-        this.colors = [[0,0,0],[255,255,255],[255,0,0],[0,0,0]]; // Vertex color list, array of vec3's rgb or vec4's rgba for outside of ThreeJS. For ThreeJS use THREE.Color("rgb(r,g,b)") for each array item.
+        this.mesh = [0,0,0,1,1,1,1,0,0,0,0,0]; // Model vertex list, array of vec3's xyz, so push x,y,z components. For ThreeJS use THREE.Mesh(vertices, material) to generate a model from this list with the selected material
+        this.normals = [];
+        this.colors = [0,0,0,255,255,255,255,0,0,0,0,0]; // Vertex color list, array of vec3's rgb or vec4's rgba for outside of ThreeJS. For ThreeJS use THREE.Color("rgb(r,g,b)") for each array item.
         this.materials = []; // Array of materials maps i.e. lighting properties and texture maps.
         this.textures = []; // Array of texture image files.
 
@@ -419,10 +451,10 @@ export class graphNode { //Use this to organize 3D models hierarchically if need
         this.parent = parent;
         this.globalPos = parent.globalPos;
         this.globalRot = parent.globalRot;
+        this.globalScale = parent.globalScale;
         this.functions.concat(parent.functions);
         this.children.forEach((child)=>{
-            child.globalPos = parent.global;
-            child.functions.concat(parent.functions);
+            child.inherit(parent);
         });
     }
 
@@ -438,40 +470,95 @@ export class graphNode { //Use this to organize 3D models hierarchically if need
         });
     }
 
-    translate(offset=[0,0,0]){ //Recursive global translation of this node and all children
-        this.globalPos=[this.globalPos.x+offset[0],this.globalPos.y+offset[1],this.globalPos.z+offset[2]];
+    translateMeshGlobal(offset=[0,0,0]){ //Recursive global translation of this node and all children
+        this.globalPos.x+=offset[0];
+        this.globalPos.y+=offset[1];
+        this.globalPos.z+=offset[2];
+
+        if(this.mesh.length > 0) this.mesh = Math3D.translateMesh(this.mesh,this.globalPos.x, this.globalPos.y, this.globalPos.z);
+        if(this.normals.length > 0) this.normals = Math3D.translateMesh(this.normals,this.globalPos.x, this.globalPos.y, this.globalPos.z);
+
         this.children.forEach((child)=>{
-            child.translate(offset);
+            child.translateMeshGlobal(offset);
         });
     }
 
-    setGlobalRotation(offset=[0,0,0]){ //Offsets the global rotation of this node and all child nodes (radian)
+    rotateMeshGlobal(offset=[0,0,0]){ //Offsets the global rotation of this node and all child nodes (radian)
         this.globalRot.x+=offset[0];
         this.globalRot.y+=offset[1];
         this.globalRot.z+=offset[2];
+
+        if(this.mesh.length > 0) this.mesh = Math3D.rotateMesh(this.mesh,this.globalRot.x, this.globalRot.y, this.globalRot.z);
+        if(this.normals.length > 0) this.normals = Math3D.rotateMesh(this.normals,this.globalRot.x, this.globalRot.y, this.globalRot.z);
+
         this.children.forEach((child)=>{
-            child.setGlobalRotation(offset);
+            child.rotateMeshGlobal(offset);
         });
     }
 
-    getGlobalMesh() { //Get mesh with rotation and translation applied
-        var globalmeshvertices = [];
-        var rotated = Math3D.rotateMesh(this.mesh,this.globalRot.x+this.localRot.x,this.globalRot.y+this.localRot.y,this.globalRot.z+this.localRot.z);
-        for(var i = 0; i < this.mesh.length; i++){
-            globalmeshvertices.push([
-                rotated[i][0]+this.globalPos.x+this.localPos.x,
-                rotated[i][1]+this.globalPos.y+this.localPos.y,
-                rotated[i][2]+this.globalPos.z+this.localPos.z
-            ]);
-        }
+    translateMeshLocal(offset=[0,0,0]){ //Recursive global translation of this node and all children
+        this.localPos.x+=offset[0];
+        this.localPos.y+=offset[1];
+        this.localPos.z+=offset[2];
 
-        return globalmeshvertices;
+        if(this.mesh.length > 0) this.mesh = Math3D.translateMesh(this.mesh,this.localPos.x, this.localPos.y, this.localPos.z);
+        if(this.normals.length > 0) this.normals = Math3D.translateMesh(this.normals,this.localPos.x, this.localPos.y, this.localPos.z);
+
+        this.children.forEach((child)=>{
+            child.translateMeshLocal(offset);
+        });
+    }
+
+    translateMeshGlobal(offset=[0,0,0]){ //Offsets the global rotation of this node and all child nodes (radian)
+        this.localRot.x+=offset[0];
+        this.localRot.y+=offset[1];
+        this.localRot.z+=offset[2];
+
+        if(this.mesh.length > 0) this.mesh = Math3D.rotateMesh(this.mesh,this.globalPos.x, this.globalPos.y, this.globalPos.z);
+        if(this.normals.length > 0) this.normals = Math3D.rotateMesh(this.normals,this.globalPos.x, this.globalPos.y, this.globalPos.z);
+
+        this.children.forEach((child)=>{
+            child.translateMeshGlobal(offset);
+        });
+    }
+
+    scaleMeshLocal(scalar=[1,1,1]){
+        this.localScale.x+=scalar[0];
+        this.localScale.y+=scalar[1];
+        this.localScale.z+=scalar[2];
+
+        if(this.mesh.length > 0) this.mesh = Math3D.scaleMesh(this.mesh,this.localScale.x, this.localScale.y, this.localScale.z);
+        if(this.normals.length > 0) this.normals = Math3D.scaleMesh(this.normals,this.localScale.x, this.localScale.y, this.localScale.z);
+
+        this.children.forEach((child)=>{
+            child.scaleMeshLocal(offset);
+        });
+    }
+
+    scaleMeshGlobal(scalar=[1,1,1]){
+        this.globalScale.x+=scalar[0];
+        this.globalScale.y+=scalar[1];
+        this.globalScale.z+=scalar[2];
+
+        if(this.mesh.length > 0) this.mesh = Math3D.scaleMesh(this.mesh,this.globalScale.x, this.globalScale.y, this.globalScale.z);
+        if(this.normals.length > 0) this.normals = Math3D.scaleMesh(this.normals,this.globalScale.x, this.globalScale.y, this.globalScale.z);
+
+        this.children.forEach((child)=>{
+            child.scaleMeshGlobal(offset);
+        });
+    }
+
+    applyMeshTransforms() { //Get mesh with rotation and translation applied
+        var rotated = Math3D.rotateMesh(this.mesh,this.globalRot.x+this.localRot.x,this.globalRot.y+this.localRot.y,this.globalRot.z+this.localRot.z);
+        var translated = Math3D.translateMesh(rotated,this.globalPos.x+this.localPos.x, this.globalPos.y+this.localPos.y, this.globalPos.z+this.localPos.z);
+        var scaled = Math3D.scaleMesh(translated, this.globalScale.x+this.localScale.x, this.globalScale.y+this.localScale.y, this.globalScale.z+this.localScale.z);
+        return scaled;
     }
 
 }
 
 
-export class camera { //pinhole camera model. Use to set your 3D rendering view model
+class Camera { //pinhole camera model. Use to set your 3D rendering view model
     constructor (position={x:0,y:0,z:0},rotation={x:0,y:0,z:0},fov=90,aspect=1,near=0,far=1,fx=1,fy=1,cx=0,cy=0) {
 
         this.position = position;
@@ -493,9 +580,6 @@ export class camera { //pinhole camera model. Use to set your 3D rendering view 
 
         this.cameraMat = this.getViewProjectionMatrix();
 
-        /*
-
-        */
     }
 
     getPerspectiveMatrix(fieldOfViewInRadians=this.fov, aspectRatio=this.aspect, near=this.near, far=this.far) {
@@ -537,6 +621,10 @@ export class camera { //pinhole camera model. Use to set your 3D rendering view 
         return Math3D.matmul2D(this.getPerspectiveMatrix(), viewMat); //View projection matrix result
     }
 
+    getCameraTransform() {
+        return Float32Array(this.cameraMat);
+    }
+
     updateRotation() {
         this.cameraMat = Math3D.rotateM4(this.cameraMat, this.rotation.x, this.rotation.y, this.rotation.z);
     }
@@ -570,7 +658,7 @@ export class camera { //pinhole camera model. Use to set your 3D rendering view 
 
 
 
-export class Physics {
+class Physics {
     constructor(nBodies = 10) {
 
         this.physicsBodies = [];
@@ -895,3 +983,294 @@ export class Physics {
     //Plane collision
 
 }
+
+
+
+//Some simple object primitives
+class Primitives {
+
+    constructor() {
+
+    }
+
+    static FibSphere(nPoints){
+        var goldenRatio = (1 + Math.sqrt(5)) * .5;
+        var goldenAngle = (2.0 - goldenRatio) * (2.0*Math.PI);
+
+        var vertices = [];
+
+        for(var i = 0; i<nPoints; i++){
+            var t = i/nPoints;
+            var angle1 = Math.acos(1-2*t);
+            var angle2 = goldenAngle*i;
+
+            var x = Math.sin(angle1)*Math.cos(angle2);
+            var y = Math.sin(angle1)*Math.sin(angle2);
+            var z = Math.cos(angle1);
+
+            vertices.push(x,y,z);
+        }
+
+        return vertices; // Returns vertex list [x0,y0,z0,x1,y1,z1,...]
+
+    }
+
+    static Sphere(nDivs=10){
+
+    }
+
+    static Cube(sideX=1,sideY=1,sideZ=1){
+
+    }
+
+    static Pyramid(sideX=1,sideY=1,heightZ=1){
+
+    }
+
+    static Cone(radiusXY=1,heightZ=1,nDivs=20){
+
+    }
+
+    static Cylinder(radiusXY=1,heightZ=1,nDivs=20) {
+
+    }
+
+    static Torus(radiusXY=1,radiusZ=0.1,nDivs=20) {
+
+    }
+
+}
+
+
+class WebGLHelper {
+    constructor(canvasId) {
+        this.canvas = document.getElementById(canvasId);
+        this.gl = canvas.getContext("webgl");
+
+        this.vertexShader = null;
+        this.fragmentShader = null;
+
+        this.program = null;
+
+        this.shaders = [];
+    }
+
+    genBasicShaders(vId = `vertex-shader`, fId = `fragment-shader`) {
+        var vertexShader = `
+            <script id="`+vId+`" type="x-shader/x-vertex">
+                attribute vec4 a_position; \n
+                uniform mat4 u_matrix; \n
+                varying vec4 v_color;
+                void main() { \n
+                    // Multiply the position by the matrix. \n
+                    gl_Position = u_matrix * a_position; \n
+                    v_color = a_color;
+                } \n
+            </script>`;
+
+        var fragShader = `
+            <script id="`+fId+`" type="x-shader/x-fragment"> \n
+                precision mediump float; \n
+                varying vec4 v_color;
+                void main() { \n
+                    gl_Fragcolor = v_color; \n
+                } \n
+            </script>`;
+
+        this.canvas.insertAdjacentHTML('beforebegin', vertexShader);
+        this.canvas.insertAdjacentHTML('beforebegin', fragShader);
+
+        this.vertexShader = document.getElementById("vertexShader").text;
+        this.fragmentShader = document.getElementById("fragmentShader").text;
+
+    }
+
+    createShader(gl, type, source) {
+        var shader = gl.createShader(type);
+        gl.shaderSource(shader, source);
+        gl.compileShader(shader);
+        var success = gl.getShaderParameter(shader, gl.COMPILE_STATUS);
+        if (success) {
+            this.shaders.push(shader);
+            return shader;
+        }
+        else {
+            console.log(gl.getShaderInfoLog(shader));
+            gl.deleteShader(shader);
+        }
+    }
+
+    createProgram(gl, vertexShader, fragmentShader) {
+        var program = gl.createProgram();
+        gl.attachShader(program, vertexShader);
+        gl.attachShader(program, fragmentShader);
+        gl.linkProgram(program);
+        var success = gl.getProgramParameter(program, gl.LINK_STATUS);
+        if (success) {
+            this.program = program;
+            return program;
+        }
+
+        console.log(gl.getProgramInfoLog(program));
+        gl.deleteProgram(program);
+    }
+
+    resizeCanvas(newWidth,newHeight) {
+        this.canvas.width = newWidth;
+        this.canvas.height = newHeight;
+    }
+}
+
+
+
+
+
+function testWebGLRender(canvasId) {
+    var canvas=document.getElementById(canvasId);
+    var gl = canvas.getContext("webgl");
+    if(!gl) {
+        return;
+    }
+
+    var vertexShader = `
+    <script id="vertex-shader-3d" type="x-shader/x-vertex">
+        attribute vec4 a_position; \n
+        uniform mat4 u_matrix; \n
+        varying vec4 v_color;
+        void main() { \n
+            // Multiply the position by the matrix. \n
+            gl_Position = u_matrix * a_position; \n
+            v_color = a_color;
+        } \n
+    </script>`;
+
+    var fragShader = `
+    <script id="fragment-shader-3d" type="x-shader/x-fragment"> \n
+        precision mediump float; \n
+        varying vec4 v_color;
+        void main() { \n
+            gl_Fragcolor = v_color; \n
+        } \n
+    </script>`;
+
+    document.body.insertAdjacentHTML('afterbegin',vertexShader);
+    document.body.insertAdjacentHTML('afterbegin',fragShader);
+
+
+    function createShader(gl, type, source) {
+        var shader = gl.createShader(type);
+        gl.shaderSource(shader, source);
+        gl.compileShader(shader);
+        var success = gl.getShaderParameter(shader, gl.COMPILE_STATUS);
+        if (success) {
+          return shader;
+        }
+
+        console.log(gl.getShaderInfoLog(shader));
+        gl.deleteShader(shader);
+    }
+
+    function createProgram(gl, vertexShader, fragmentShader) {
+        var program = gl.createProgram();
+        gl.attachShader(program, vertexShader);
+        gl.attachShader(program, fragmentShader);
+        gl.linkProgram(program);
+        var success = gl.getProgramParameter(program, gl.LINK_STATUS);
+        if (success) {
+          return program;
+        }
+
+        console.log(gl.getProgramInfoLog(program));
+        gl.deleteProgram(program);
+    }
+
+    var vertexShaderSource = document.querySelector("#vertex-shader-3d").text;
+    var fragmentShaderSource = document.querySelector("#fragment-shader-3d").text;
+
+    var vertexShader = createShader(gl, gl.VERTEX_SHADER, vertexShaderSource);
+    var fragmentShader = createShader(gl, gl.FRAGMENT_SHADER, fragmentShaderSource);
+
+    var program = createProgram(gl, vertexShader, fragmentShader);
+
+    var positionLocation = gl.getAttribLocation(program, "a_position");
+    var colorLocation = gl.getAttribLocation(program, "a_color");
+
+    // lookup uniforms
+    var matrixLocation = gl.getUniformLocation(program, "u_matrix");
+
+    // Create a buffer to put positions in
+    var positionBuffer = gl.createBuffer();
+    // Bind it to ARRAY_BUFFER (think of it as ARRAY_BUFFER = positionBuffer)
+    gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
+
+    var fibSphere = Primitives.FibSphere(1000);
+    var fibSphereColors8 = new Uint8Array(new Array(fibSphere.length).fill(255));
+    var fibSphereFloat32 = new Float32Array(fibSphere);
+
+    for(var i = 0; i < fibSphere.length; i+=3) {
+        fibSphereColors[i] = 200;
+        fibSphereColors[i+1] = 70;
+        fibSphereColors[i+2] = 120;
+    }
+
+    gl.bufferData(gl.ARRAY_BUFFER, fibSphereFloat32, gl.STATIC_DRAW);
+
+    var colorBuffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, colorBuffer);
+    gl.bufferData(gl.ARRAY_BUFFER, fibSphereColors8, gl.STATIC_DRAW);
+
+    // Compute the projection matrix
+    var aspect = gl.canvas.clientWidth / gl.canvas.clientHeight;
+    var zNear = 1;
+    var zFar = 2000;
+
+    var camera = new Camera(undefined,undefined,1,aspect,zNear,zFar,0,0,0,0);
+
+    var cameraTransform = camera.getCameraTransform();
+
+    drawScene();
+
+    var drawScene = () => {
+        gl.viewport(0,0, gl.canvas.width, gl.canvas.height);
+        gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+
+        gl.enable(gl.CULL_FACE);
+        gl.enable(gl.DEPTH_TEST);
+
+        gl.useProgram(program);
+
+        gl.enableVertexAttribArray(positionLocation);
+        gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
+
+        var size = 3;          // 3 components per iteration
+        var type = gl.FLOAT;   // the data is 32bit floats
+        var normalize = false; // don't normalize the data
+        var stride = 0;        // 0 = move forward size * sizeof(type) each iteration to get the next position
+        var offset = 0;        // start at the beginning of the buffer
+
+        gl.vertexAttribPointer(positionLocation, size, type, normalize, stride, offset);
+
+        gl.enableVertexAttribArray(colorLocation);
+
+        gl.bindBuffer(gl.ARRAY_BUFFER, colorBuffer);
+
+        // Tell the attribute how to get data out of colorBuffer (ARRAY_BUFFER)
+        var size = 3;                 // 3 components per iteration
+        var type = gl.UNSIGNED_BYTE;  // the data is 8bit unsigned values
+        var normalize = true;         // normalize the data (convert from 0-255 to 0-1)
+        var stride = 0;               // 0 = move forward size * sizeof(type) each iteration to get the next position
+        var offset = 0;               // start at the beginning of the buffer
+        gl.vertexAttribPointer(colorLocation, size, type, normalize, stride, offset);
+
+        gl.uniformMatrix4fv(matrixLocation, false, cameraTransform);
+
+        var prim = gl.TRIANGLES;
+        var offset = 0;
+        var count = fibSphere.length;
+
+        gl.drawArrays(prim,offset,count);
+
+    }
+
+}
+
