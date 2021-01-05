@@ -1,5 +1,5 @@
 //Utilities for WebGL render prep. Contains graphnodes and projection matrices. For super optimal matrix math use glMatrix (https://github.com/toji/gl-matrix) or some other math utility
-//TODO: lighting, quick geometry buffering functions, demonstrate physics, maybe scrap the 2D matrix math for typical quicker 1D array based matrix math
+//TODO: lighting, quick geometry buffering functions, demonstrate physics, maybe scrap the 2D matrix math for typical quicker 1D array based matrix math.
 
 class Math3D { //some stuff for doing math in 3D
     constructor() {
@@ -61,7 +61,7 @@ class Math3D { //some stuff for doing math in 3D
         var normalMesh = [...mesh];
         for(var i = 0; i<mesh.length; i+=9){
             var normal = this.calcNormal([mesh[i],mesh[i+1],mesh[i+2]],[mesh[i+3],mesh[i+4],mesh[i+5]],[mesh[i+6],mesh[i+7],mesh[i+8]]);
-            normalMesh[i]   = normal[0];
+            normalMesh[ i ] = normal[0];
             normalMesh[i+1] = normal[1];
             normalMesh[i+2] = normal[2];
             normalMesh[i+3] = normal[0];
@@ -210,7 +210,7 @@ class Math3D { //some stuff for doing math in 3D
         return [
           [1, 0, 0, 0],
           [0, c, s, 0],
-          [0, -s, c, 0],
+          [0,-s, c, 0],
           [0, 0, 0, 1],
         ];
     }
@@ -220,7 +220,7 @@ class Math3D { //some stuff for doing math in 3D
         var s = Math.sin(angleInRadians);
 
         return [
-          [c, 0, -s, 0],
+          [c, 0,-s, 0],
           [0, 1, 0, 0],
           [s, 0, c, 0],
           [0, 0, 0, 1]

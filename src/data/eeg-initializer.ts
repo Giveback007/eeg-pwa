@@ -22,6 +22,7 @@ export const eegConnection = new eeg32(undefined,() => {
 }); //onDecoded callback to set state on front end.
 
 const receivedMsg = (msg: { foo: string, output: any[] }) => {
+  console.log("Received message");
   if (msg.foo === "coherence") {
 
     var posFFTList = [...msg.output[1]]; //Positive FFT array of arrays
@@ -43,13 +44,13 @@ const receivedMsg = (msg: { foo: string, output: any[] }) => {
 
     atlas.mapCoherenceData(coherenceResults, s.lastPostTime);
 
-
+    console.log(atlas.map[0].data.count);
     Actions.COHERENCE_WORKER_DONE(); // Called AFTER processing everything into the state managers
   }
 }
 
 export const workers = new WorkerUtil(2,'./js/eegworker.js',(msg: any) => {receivedMsg(msg)}); //not sure I am passing this correctly
-
+console.log(workers);
 export function runEEGinitializer() {
 
   let bandPassWindow = atlas.bandPassWindow(0,100,eegConnection.sps)
@@ -190,20 +191,21 @@ export function runEEGinitializer() {
 
   //Sub action for setting the bandpass filter to update the bandpass
   store.actionSub('BANDPASS_SET', async (a) => {
+    store.setState({freqStart: a.data.freqStart, freqEnd: a.data.freqEnd})
     updateBandPass(a.data.freqStart,a.data.freqEnd);
   });
 
 
   store.actionSub('EEG_CONNECT', async (a) => {
     store.changeNavBtn('left', 0, { ...eegDisconnectNavBtn, loading: true });
-    await eegConnection.setupSerialAsync();
+    eegConnection.setupSerialAsync();
     await wait(500); // creates a sense of a more responsive ui
     store.changeNavBtn('left', 0, eegDisconnectNavBtn);
   });
 
   store.actionSub('EEG_DISCONNECT', async (a) => {
     store.changeNavBtn('left', 0, { ...eegConnectNavBtn, loading: true });
-    await eegConnection.closePort();
+    eegConnection.closePort();
     await wait(500); // creates a sense of a more responsive ui
     store.changeNavBtn('left', 0, eegConnectNavBtn);
   });

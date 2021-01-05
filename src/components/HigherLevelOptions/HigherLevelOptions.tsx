@@ -9,14 +9,14 @@ import { store } from 'src/data/store';
 // added this to trigger type errors on incomplete change.
 const channelView = 'channelView';
 const channelTags = 'channelTags';
-const bpassLower = 'bpassLower';
-const bpassUpper = 'bpassUpper';
+const freqStart = 'freqStart';
+const freqEnd = 'freqEnd';
 
 type S = {
     channelView: string;
     channelTags: string;
-    bpassLower: string;
-    bpassUpper: string;
+    freqStart: string;
+    freqEnd: string;
     opened: boolean;
 }
 
@@ -28,8 +28,8 @@ export class HigherLevelOptions extends React.Component<P, S> {
     state: S = {
         channelView: '',
         channelTags: '',
-        bpassLower: '',
-        bpassUpper: '',
+        freqStart: '',
+        freqEnd: '',
         opened: false,
     };
 
@@ -44,17 +44,17 @@ export class HigherLevelOptions extends React.Component<P, S> {
         switch (type) {
             case 'TAGS':
                 Actions.CHANNEL_TAGS_SET(this.state.channelTags);
-                return this.setState({ channelTags: '' });
+                return;
             case 'VIEW':
                 Actions.CHANNEL_VIEW_SET(this.state.channelView);
-                return this.setState({ channelView: '' });
+                return;
             case 'BPASS':
                 Actions.BANDPASS_SET({
-                    freqStart: Number(this.state.bpassLower),
-                    freqEnd: Number(this.state.bpassUpper)
+                    freqStart: Number(this.state.freqStart),
+                    freqEnd: Number(this.state.freqEnd)
                 });
 
-                return this.setState({ bpassLower: '', bpassUpper: '' });
+                return;
         }
     }
 
@@ -109,8 +109,8 @@ export class HigherLevelOptions extends React.Component<P, S> {
             {/* Set bandpass */}
             <div className="hlo-row">
                 <TextField
-                    name={bpassLower}
-                    value={s[bpassLower]}
+                    name={freqStart}
+                    value={s[freqStart]}
                     onChange={this.handleInputChange}
                     className="hlo-input"
                     type="number"
@@ -118,8 +118,8 @@ export class HigherLevelOptions extends React.Component<P, S> {
                     variant="outlined"
                 />
                 <TextField
-                    name={bpassUpper}
-                    value={s[bpassUpper]}
+                    name={freqEnd}
+                    value={s[freqEnd]}
                     onChange={this.handleInputChange}
                     className="hlo-input"
                     type="number"

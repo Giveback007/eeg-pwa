@@ -20,6 +20,10 @@ export const Actions = {
 
     EEG_DISCONNECT: () => a({ type: "EEG_DISCONNECT" } as const),
 
+    EEG_ANALYZE: () => a({ type: "EEG_ANALYZE" } as const),
+
+    EEG_STOP: () => a({ type: "EEG_STOP" } as const),
+
     TOP_OPTS_TOGGLE: () => a({ type: 'TOP_OPTS_TOGGLE' } as const),
 }
 
