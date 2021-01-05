@@ -1,21 +1,22 @@
 export class WorkerUtil {
 
-    constructor(nThreads=1, workerSrc = './js/eegworker.js', onReceivedMsg = this.onReceivedMsg) {
+    constructor(nThreads=1, workerSrc = './js/eegworker.js', onReceivedMsg = this.onReceivedMsg, debug = false) {
         // this.onReceivedMsg = onReceivedMsg || this.onReceivedMsg
 
         // if(!receivedMsg) { this.onReceivedMsg = onReceivedMsg; }
         this.workers;
         this.threads = nThreads;
         this.threadRotation = 0;
+        this.debug = debug;
 
         try {
             this.workers = [];
                 for(var i = 0; i < this.threads; i++){
                     this.workers.push(new Worker(workerSrc));
                     this.workers[i].onmessage = (e) => {
-                        var msg = e.data; //Returned string
-                        //console.log(msg)
-                        this.onReceivedMsg(msg);
+                        var msg = { idx: i, msg: e.data}; //Returned parsed string
+                        if(this.debug === true){console.log(i,": ", msg);}
+                        onReceivedMsg(msg);
                     };
                 }
                 console.log("worker threads: ", this.threads)
@@ -31,6 +32,7 @@ export class WorkerUtil {
     postToWorker = (input,workeridx = null) => {
         if(workeridx === null) {
             this.workers[this.threadRotation].postMessage(input);
+            if(this.debug === true){console.log("worker: ", this.threadRotation, " was sent: ", input);}
             if(this.threads > 1){
                 this.threadRotation++;
                 if(this.threadRotation >= this.threads){
@@ -40,6 +42,7 @@ export class WorkerUtil {
         }
         else{
             this.workers[workeridx].postMessage(input);
+            if(this.debug === true){console.log("worker: ", workeridx, " was sent: ", input);}
         }
     }
 

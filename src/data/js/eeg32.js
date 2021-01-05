@@ -15,6 +15,8 @@ export class eeg32 { //Contains structs and necessary functions/API calls to ana
             [stop byte, start byte, counter byte, 32x3 channel data bytes (24 bit), 3x2 accelerometer data bytes, stop byte, start byte...]
             Total = 105 bytes/line
         */
+		this.connected = false;
+		this.subscribed = false;
         this.buffer = [];
         this.startByte = 160; // Start byte value
 		this.stopByte = 192; // Stop byte value
@@ -132,16 +134,24 @@ export class eeg32 { //Contains structs and necessary functions/API calls to ana
 	}
 
 	async onPortSelected(port,baud) {
-		try {await port.open({ baudRate: baud, bufferSize: 1000 });} //API inconsistency in syntax between linux and windows
-		catch {await port.open({ baudrate: baud, buffersize: 1000 });}
-		this.onConnectedCallback();
-		this.subscribe(port);//this.subscribeSafe(port);
+		try{
+			try {await port.open({ baudRate: baud, bufferSize: 1000 });} //API inconsistency in syntax between linux and windows
+			catch {await port.open({ baudrate: baud, buffersize: 1000 });}
+			this.onConnectedCallback();
+			this.connected = true;
+			this.subscribed = true;
+			this.subscribe(port);//this.subscribeSafe(port);
+		}
+		catch(err){
+			console.log(err);
+			this.connected = false;
+		}
 	}
 
 	async subscribe(port){
 		while (this.port.readable) {
 			var reader = port.readable.getReader();
-			while(true) {
+			while(this.subscribed === true) {
 				try {
 					const { value, done } = await reader.read();
 					if (done) {
@@ -205,10 +215,14 @@ export class eeg32 { //Contains structs and necessary functions/API calls to ana
 		});
 	}
 
-	async closePort(port) {
+	async closePort(port=this.port) {
 		//if(this.reader) {this.reader.releaseLock();}
-		await port.close();
-		this.port = null;
+		this.subscribed = false;
+		setTimeout(async () => {
+			await port.close();
+			this.port = null;
+			this.connected = false;
+		}, 100);
 	}
 
 	async setupSerialAsync(baudrate=115200) { //You can specify baudrate just in case

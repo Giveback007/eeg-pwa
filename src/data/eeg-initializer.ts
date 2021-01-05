@@ -19,14 +19,14 @@ var defaultTags = [
 export const atlas = new eegAtlas(defaultTags);
 export const eegConnection = new eeg32(undefined,() => {
     store.setState({rawFeed: true});
-}); //onDecoded callback to set state on front end.
+}); //onConnected callback to set state on front end.
 
-const receivedMsg = (msg: { foo: string, output: any[] }) => {
+const receivedMsg = (input: {idx: number, msg: { foo: string, output: any[] }}) => {
   console.log("Received message");
-  if (msg.foo === "coherence") {
+  if (input.msg.foo === "coherence") {
 
-    var posFFTList = [...msg.output[1]]; //Positive FFT array of arrays
-    var coherenceResults = [...msg.output[2]];
+    var posFFTList = [...input.msg.output[1]]; //Positive FFT array of arrays
+    var coherenceResults = [...input.msg.output[2]];
 
     store.setState({
       posFFTList:posFFTList,
@@ -49,7 +49,7 @@ const receivedMsg = (msg: { foo: string, output: any[] }) => {
   }
 }
 
-export const workers = new WorkerUtil(2,'./js/eegworker.js',(msg: any) => {receivedMsg(msg)}); //not sure I am passing this correctly
+export const workers = new WorkerUtil(2,'./js/eegworker.js',(msg: any) => {console.log("received!"); receivedMsg(msg);}, true); //not sure I am passing this correctly
 console.log(workers);
 export function runEEGinitializer() {
 
@@ -212,8 +212,17 @@ export function runEEGinitializer() {
 
 
   store.actionSub('EEG_ANALYZE', async (a) => {
-    store.setState({analyze: true});
-    runEEGWorker();
+    if(store.getState().analyze === false) {
+
+      if(eegConnection.connected === true) {
+        console.log("Begin analyzing EEG data");
+        store.setState({analyze: true});
+        runEEGWorker();
+      }
+      else {
+        Actions.EEG_CONNECT();
+      }
+    }
   });
 
   store.actionSub('EEG_STOP', async (a) => {
@@ -225,7 +234,8 @@ export function runEEGinitializer() {
       if(s.analyze === true){
         store.setState({["lastPostTime"]: eegConnection.data.ms[eegConnection.data.ms.length-1]});
         if(s.fdBackMode === 'coherence') {
-            workers.postToWorker({foo:'coherence', input:[bufferEEGData(), s.nSec, s.freqStart, s.freqEnd, eegConnection.scalar]});
+          console.log("post to worker")
+          workers.postToWorker({foo:'coherence', input:[bufferEEGData(), s.nSec, s.freqStart, s.freqEnd, eegConnection.scalar]});
         }
       }
   }
